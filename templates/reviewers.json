@@ -1,0 +1,24 @@
+[
+  {
+    "review_id": "<review-id-a>",
+    "reviewer_id": "<external-reviewer-a>",
+    "independence": true,
+    "decision": "APPROVE",
+    "source_commit": "<40-lowercase-hex>",
+    "evidence_hash": "sha256:<64-lowercase-hex>",
+    "replay_result_hash": "sha256:<64-lowercase-hex>",
+    "public_key_b64": "<ed25519-public-key-base64>",
+    "signature_b64": "<signature-base64>"
+  },
+  {
+    "review_id": "<review-id-b>",
+    "reviewer_id": "<external-reviewer-b>",
+    "independence": true,
+    "decision": "APPROVE",
+    "source_commit": "<40-lowercase-hex>",
+    "evidence_hash": "sha256:<64-lowercase-hex>",
+    "replay_result_hash": "sha256:<64-lowercase-hex>",
+    "public_key_b64": "<ed25519-public-key-base64>",
+    "signature_b64": "<signature-base64>"
+  }
+]

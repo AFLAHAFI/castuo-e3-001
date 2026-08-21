@@ -1,0 +1,14 @@
+{
+  "scenario_id": "S-001A",
+  "protocol_id": "E3-001-S001A-FOREIGN-REPLAY",
+  "source_commit": "<40-lowercase-hex>",
+  "fixture_path": "fixture.json",
+  "fixture_hash": "sha256:<64-lowercase-hex>",
+  "result_hash": "sha256:<64-lowercase-hex>",
+  "evidence_hash": "sha256:<64-lowercase-hex>",
+  "rollback_ref": "<immutable-tag-or-commit>",
+  "external_runner": true,
+  "foreign_replay": true,
+  "production_claim": false,
+  "commercial_claim": false
+}

@@ -1,0 +1,13 @@
+{
+  "scenario_id": "S-001A",
+  "replay_status": "PASS_WITHIN_DECLARED_SCOPE",
+  "review_status": "REVIEW_PENDING",
+  "claim_boundary": "EXTERNAL_REPLAY_ONLY",
+  "assurance": {
+    "oneD": true,
+    "oneR": true,
+    "oneV": false,
+    "oneA": false
+  },
+  "promotion": "BLOCKED"
+}

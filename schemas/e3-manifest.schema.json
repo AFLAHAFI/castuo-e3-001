@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Traky12/castuo-e3-001/blob/main/schemas/e3-manifest.schema.json",
+  "title": "E3-001 External Verification Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scenario_id",
+    "protocol_id",
+    "source_commit",
+    "fixture_path",
+    "fixture_hash",
+    "result_hash",
+    "evidence_hash",
+    "rollback_ref",
+    "external_runner",
+    "foreign_replay",
+    "production_claim",
+    "commercial_claim"
+  ],
+  "properties": {
+    "scenario_id": {"const": "S-001A"},
+    "protocol_id": {"const": "E3-001-S001A-FOREIGN-REPLAY"},
+    "source_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "fixture_path": {"type": "string", "pattern": "^[^/].*[^/]$"},
+    "fixture_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "result_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "evidence_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "rollback_ref": {"type": "string", "minLength": 3},
+    "external_runner": {"const": true},
+    "foreign_replay": {"const": true},
+    "production_claim": {"const": false},
+    "commercial_claim": {"const": false}
+  }
+}
