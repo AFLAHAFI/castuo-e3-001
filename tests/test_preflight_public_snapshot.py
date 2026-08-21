@@ -49,6 +49,16 @@ class PreflightTests(unittest.TestCase):
             (bundle / "runner-attestation.json").unlink()
             self.assertEqual(self.run_preflight(bundle), 1)
 
+    def test_symlink_artifact_blocks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = self.bundle(root)
+            target = root / "outside.json"
+            target.write_text("{}", encoding="utf-8")
+            (bundle / "runner-attestation.json").unlink()
+            (bundle / "runner-attestation.json").symlink_to(target)
+            self.assertEqual(self.run_preflight(bundle), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

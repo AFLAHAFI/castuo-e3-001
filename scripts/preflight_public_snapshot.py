@@ -17,6 +17,22 @@ REQUIRED_FILES = (
 )
 
 
+def safe_required_artifact(bundle: Path, filename: str) -> tuple[Path | None, str | None]:
+    """Return a regular in-bundle artifact or a fail-closed finding."""
+    candidate = bundle / filename
+    if candidate.is_symlink():
+        return None, f"required bundle artifact must not be a symlink: {filename}"
+    try:
+        resolved = candidate.resolve(strict=False)
+        bundle_root = bundle.resolve(strict=True)
+        resolved.relative_to(bundle_root)
+    except (OSError, ValueError):
+        return None, f"required bundle artifact escapes bundle root: {filename}"
+    if not candidate.is_file():
+        return None, f"missing required bundle artifact: {filename}"
+    return candidate, None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path)
@@ -28,16 +44,20 @@ def main() -> int:
     findings: list[str] = []
     bundle = args.bundle.resolve()
     source_commit = args.source_commit
+    artifacts: dict[str, Path] = {}
     if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
         findings.append("source_commit must be exactly 40 lowercase hexadecimal characters")
     if not bundle.is_dir():
         findings.append("bundle directory does not exist")
     else:
         for filename in REQUIRED_FILES:
-            if not (bundle / filename).is_file():
-                findings.append(f"missing required bundle artifact: {filename}")
-        manifest_path = bundle / "manifest.json"
-        if manifest_path.is_file():
+            artifact, finding = safe_required_artifact(bundle, filename)
+            if finding:
+                findings.append(finding)
+            elif artifact:
+                artifacts[filename] = artifact
+        manifest_path = artifacts.get("manifest.json")
+        if manifest_path:
             try:
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
@@ -53,6 +73,7 @@ def main() -> int:
                     findings.append("manifest.production_claim must be false")
                 if manifest.get("commercial_claim") is not False:
                     findings.append("manifest.commercial_claim must be false")
+
     secret_present = bool(os.environ.get("CASTUO_SNAPSHOT_SIGNING_KEY_B64"))
     if args.require_signing_secret and not secret_present:
         findings.append("CASTUO_SNAPSHOT_SIGNING_KEY_B64 is not present in this execution environment")
