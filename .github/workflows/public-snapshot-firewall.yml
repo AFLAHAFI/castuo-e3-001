@@ -1,0 +1,24 @@
+name: Public snapshot claim firewall
+
+on:
+  pull_request:
+    paths:
+      - "public/status-snapshot.json"
+      - "scripts/validate_public_snapshot_firewall.py"
+  push:
+    branches: [main]
+    paths:
+      - "public/status-snapshot.json"
+      - "scripts/validate_public_snapshot_firewall.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firewall:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate public snapshot claim boundary
+        run: python3 scripts/validate_public_snapshot_firewall.py public/status-snapshot.json
