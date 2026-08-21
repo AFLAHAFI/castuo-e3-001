@@ -1,0 +1,77 @@
+name: E3-001 public verified snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_path:
+        description: "Path to the externally supplied evidence bundle"
+        required: true
+        default: "evidence-bundle"
+        type: string
+      source_commit:
+        description: "Exact frozen source commit bound to the bundle"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: e3-001-public-snapshot
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: public-snapshot
+    steps:
+      - name: Checkout frozen protocol repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install cryptographic verifier
+        run: python -m pip install --disable-pip-version-check cryptography
+
+      - name: Validate external evidence bundle
+        env:
+          BUNDLE_PATH: ${{ inputs.bundle_path }}
+        run: >-
+          python scripts/validate_external_evidence_bundle.py "$BUNDLE_PATH"
+          --min-reviewers 2
+          --output /tmp/external-evidence-validation.json
+
+      - name: Evaluate G2 read-only decision
+        run: >-
+          python scripts/evaluate_g2.py /tmp/external-evidence-validation.json
+          --output /tmp/g2-decision.json
+
+      - name: Publish signed public snapshot
+        env:
+          CASTUO_SNAPSHOT_SIGNING_KEY_B64: ${{ secrets.CASTUO_SNAPSHOT_SIGNING_KEY_B64 }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          RUN_ID: ${{ github.run_id }}
+          BUNDLE_PATH: ${{ inputs.bundle_path }}
+        run: >-
+          python scripts/publish_public_snapshot.py
+          --validation /tmp/external-evidence-validation.json
+          --g2-decision /tmp/g2-decision.json
+          --source-commit "$SOURCE_COMMIT"
+          --workflow-run-id "$RUN_ID"
+          --output public/status-snapshot.json
+          --require-signature
+
+      - name: Commit public snapshot only after successful verification
+        run: |
+          git config user.name "castuo-e3-001[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/status-snapshot.json
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: publish verified E3-001 public snapshot"
+          git push origin HEAD:main
