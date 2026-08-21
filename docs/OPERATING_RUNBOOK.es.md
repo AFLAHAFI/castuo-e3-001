@@ -181,7 +181,22 @@ python3 scripts/validate_public_snapshot_firewall.py /tmp/status-snapshot.json
 
 `act` puede utilizarse como simulador opcional de GitHub Actions si está instalado, pero no debe recibir la clave real ni hacer push. El workflow actual requiere `workflow_dispatch`, `bundle_path`, `source_commit`, un environment protegido y permiso de escritura; por eso la reproducción manual de los comandos es el camino determinista y más seguro antes del dispatch.
 
-## 10. Ejecutar el workflow real
+## 10. Preflight automático antes del dispatch
+
+El workflow ejecuta primero `scripts/preflight_public_snapshot.py`. Este paso comprueba los cinco artefactos obligatorios, que `manifest.source_commit` coincide con el input, que `external_runner` y `foreign_replay` son `true`, que los claims de producción y comercio son `false` y que el secreto está disponible en el entorno del runner. Nunca imprime el valor del secreto. Devuelve `READY` o `BLOCKED`; un resultado `BLOCKED` detiene la cadena.
+
+Para reproducirlo localmente sin publicar:
+
+```bash
+python3 scripts/preflight_public_snapshot.py "$BUNDLE" \
+  --source-commit "$SOURCE_COMMIT" \
+  --require-signing-secret \
+  --output /tmp/public-snapshot-preflight.json
+```
+
+La salida `READY` sólo significa que las precondiciones estructurales están presentes. Todavía deben pasar el validador E3, G2 y el firewall.
+
+## 11. Ejecutar el workflow real
 
 Sólo después de que el bundle pase localmente y el secreto esté configurado:
 
@@ -196,7 +211,7 @@ gh run list --repo Traky12/castuo-e3-001 \
 
 Aprueba el environment únicamente mediante el reviewer autorizado. El workflow valida el bundle, evalúa G2, firma el snapshot, ejecuta el firewall y sólo entonces hace commit a `main`. Cualquier fallo mantiene la ausencia del snapshot o deja la promoción bloqueada.
 
-## 11. Verificar el primer snapshot
+## 12. Verificar el primer snapshot
 
 Tras una ejecución verde:
 
