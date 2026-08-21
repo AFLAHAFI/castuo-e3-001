@@ -34,3 +34,9 @@ It rejects the artifact unless the JSON schema is valid, the canonical unsigned 
 ## Non-claims
 
 A signed public snapshot proves that the configured runner signed the declared projection. It does not, by itself, prove that the runner was independent, that the evidence was substantively inspected, that staging is production, or that an AuthorityObject exists. The E3 validator and G2 evaluator remain the source of the evidence decision; the dashboard is a read-only surface.
+
+## Current operator handoff
+
+As of the latest verification, the `public-snapshot` environment exists with protected-branch policy and a required reviewer rule for `Traky12` with self-review prevention. The environment has no configured `CASTUO_SNAPSHOT_SIGNING_KEY_B64` secret, and `public/status-snapshot.json` is intentionally absent. The public snapshot workflow therefore cannot be run successfully yet. This is the expected fail-closed state, not a workflow failure.
+
+To close the external gate, an authorized operator must add the secret through GitHub environment secrets, supply a real externally generated E3-001 bundle, and dispatch `E3-001 public verified snapshot` with the exact frozen source commit. The workflow then validates the bundle, evaluates G2, runs the public claim firewall, and writes the signed snapshot only if all checks pass. A successful run still keeps `oneA=false` and `promotion=BLOCKED`.
