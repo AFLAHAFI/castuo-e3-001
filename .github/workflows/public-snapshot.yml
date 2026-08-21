@@ -67,6 +67,9 @@ jobs:
           --output public/status-snapshot.json
           --require-signature
 
+      - name: Enforce public claim firewall
+        run: python scripts/validate_public_snapshot_firewall.py public/status-snapshot.json
+
       - name: Commit public snapshot only after successful verification
         run: |
           git config user.name "castuo-e3-001[bot]"
