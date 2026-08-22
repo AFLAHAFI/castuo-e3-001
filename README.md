@@ -81,3 +81,7 @@ promotion: BLOCKED
 ## License
 
 The protocol text and templates are published for independent verification and review. See `LICENSE` for the repository license.
+
+## CASTÚO evidence-scoped integration
+
+See the [ecosystem integration record](docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md) for the current capability, evidence, security and promotion boundary.
