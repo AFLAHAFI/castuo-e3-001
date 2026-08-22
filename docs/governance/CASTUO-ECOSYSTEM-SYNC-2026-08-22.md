@@ -34,3 +34,11 @@ A local validation is `VALIDATED_LOCAL` / `LOCAL_RESULT_NO_CLAIM`. Promotion req
 - Evidence Center: [castuo-evidence](https://github.com/Traky12/castuo-evidence)
 
 This pointer must be reviewed independently before being used as evidence for any external or production claim.
+
+## Deep audit — 2026-08-22
+
+The deep cross-repository audit found this integration branch ahead of its default branch with no branch divergence after the latest synchronization pass. The repository is included in the canonical audit scope, but GitHub reports zero registered Actions runners for the audited ecosystem. Therefore remote runner-dependent validation remains unexecuted.
+
+This repository must consume canonical promotion state and must not infer `PROMOTE` from implementation presence, local tests, dashboard status, or this pointer. Independent review, trust-root attestation, authorized rollback evidence and legal AI Act review remain separate binary predicates.
+
+Audit claim: `AUDIT_ONLY_NO_PROMOTION_CLAIM`.
