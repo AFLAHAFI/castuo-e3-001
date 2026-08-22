@@ -42,3 +42,11 @@ The deep cross-repository audit found this integration branch ahead of its defau
 This repository must consume canonical promotion state and must not infer `PROMOTE` from implementation presence, local tests, dashboard status, or this pointer. Independent review, trust-root attestation, authorized rollback evidence and legal AI Act review remain separate binary predicates.
 
 Audit claim: `AUDIT_ONLY_NO_PROMOTION_CLAIM`.
+
+## Deep audit round 2 — 2026-08-22
+
+The second audit compared integration and default branches, reviewed PR and protection state, and inspected representative failed workflows. All audited integration refs are ahead of their default branches with no behind or divergent ref observed. GitHub reports zero registered Actions runners across the audited graph. Root workflow jobs show no runner, no start time and zero steps, so they do not constitute test evidence.
+
+`Cast-o` has separate `failure` and `action_required` workflow results that require job-level investigation; they are not silently classified as runner failures. This repository must preserve the distinction between infrastructure absence, workflow failure, policy action required and successful execution.
+
+Audit claim: `AUDIT_ONLY_NO_PROMOTION_CLAIM`. Promotion remains blocked until security, review, rollback, trust-root and legal predicates are independently closed.
