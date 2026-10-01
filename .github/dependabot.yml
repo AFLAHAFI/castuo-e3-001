@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Mantiene actualizados los SHA de las acciones fijadas (docs: PRE-MERGE-REVIEW-PROTOCOL §2 en Castuo-system)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+    groups:
+      github-actions:
+        patterns:
+          - "*"
