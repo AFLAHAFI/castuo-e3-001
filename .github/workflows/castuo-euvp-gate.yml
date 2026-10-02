@@ -1,0 +1,37 @@
+name: CASTUO EUVP gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  euvp-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+      - name: Secret-pattern gate
+        run: |
+          mkdir -p artifacts/euvp
+          if grep -RInE '(BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})' \
+            --exclude-dir=.git --exclude='*.pyc' . > artifacts/euvp/secret-scan.txt; then
+            echo 'BLOCKED:secret_pattern_found' | tee artifacts/euvp/status.txt
+            exit 1
+          fi
+          echo 'PASS:secret-scan-within-declared-scope' | tee artifacts/euvp/status.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: castuo-e3-euvp-evidence
+          path: artifacts/euvp
