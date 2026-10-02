@@ -1,18 +1,32 @@
 # CASTÚO ecosystem sync — 2026-08-22
 
-This repository participates in the CASTÚO-SYSTEM integration graph as **Independent-review evidence package surface**.
+> **Historical integration record — 2026-08-22**
+>
+> This document preserves a historical integration snapshot.
+> It does not define the current public authority model, current
+> technical state, promotion state, repository visibility or deployment
+> status.
+>
+> Castuo-system remains the private canonical authority for current
+> technical state and promotion decisions.
+> castuo-evolution is a non-canonical evolution and governance
+> workspace.
+
+At the time of this snapshot, this repository participated in the CASTÚO-SYSTEM integration graph as **Independent-review evidence package surface**.
 
 ## Canonical source
 
-The current canonical root is [Traky12/Castuo-system](https://github.com/Traky12/Castuo-system). The synchronized core checkpoint is `04362ef5aa6e439c2c4557c1be923f30d2b2b8a5`.
+At the time of this snapshot, the canonical root was Castuo-system (private canonical technical authority).
+Historical private integration reference retained internally.
+Public repository access is not required to interpret this record.
 
-The source repository contains the binary promotion model, SABIONDA authority boundaries, detached Ed25519 non-repudiation controls, EU AI Act applicability dossier, HSM/revocation assurance material, required-check guidance, hardened self-hosted runner plan, local runner acceptance simulator, and the canonical Evidence Pack.
+The private source repository held the governance, assurance and evidence material referenced by this record. Its contents are not published here.
 
 ## Integration boundary
 
 This file is a navigation and provenance pointer. It does not copy core implementation into this repository, does not create a production authorization, and does not assert independent review, field validation, trust-root ceremony, vendor exit, or EU AI Act approval. Repository-specific implementation and evidence remain authoritative only when linked to a verifiable commit and replayable artifact.
 
-The current ecosystem state is:
+The ecosystem state recorded at this snapshot was:
 
 ```text
 PROMOTION=BLOCKED
@@ -27,10 +41,7 @@ A local validation is `VALIDATED_LOCAL` / `LOCAL_RESULT_NO_CLAIM`. Promotion req
 
 ## Navigation
 
-- Root architecture: [Castuo-system](https://github.com/Traky12/Castuo-system)
-- Integration status: [GITHUB-INTEGRATION-STATUS.md](https://github.com/Traky12/Castuo-system/blob/main/docs/governance/GITHUB-INTEGRATION-STATUS.md)
-- Ecosystem matrix: [ECOSYSTEM-INTEGRATION-MATRIX-2026-08-20.md](https://github.com/Traky12/Castuo-system/blob/main/docs/architecture/ECOSYSTEM-INTEGRATION-MATRIX-2026-08-20.md)
-- Runner acceptance guide: [REQUIRED-CHECKS-AND-RUNNER-ACCEPTANCE.md](https://github.com/Traky12/Castuo-system/blob/main/docs/governance/REQUIRED-CHECKS-AND-RUNNER-ACCEPTANCE.md)
+- Root architecture: Castuo-system (private canonical technical authority; not publicly accessible)
 - Evidence Center: [castuo-evidence](https://github.com/Traky12/castuo-evidence)
 
 This pointer must be reviewed independently before being used as evidence for any external or production claim.
