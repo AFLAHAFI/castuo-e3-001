@@ -1,0 +1,36 @@
+# Secret scanning for Castuo-system (private repo: GitHub secret scanning is
+# not available here). Default gitleaks rules + project rules for the class of
+# leak found in SEC-INC-001: literal passwords / API keys in assignments and
+# .env templates. Values are placeholders-only by policy (security.md §1).
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "castuo-literal-password"
+description = "Literal password assigned to a *PASSWORD / *PASS variable"
+regex = '''(?i)\b[A-Z0-9_]*(PASSWORD|PASSWD|_PASS)\b\s*[:=]\s*["']?([^\s"'$<{][^\s"']{5,})["']?'''
+secretGroup = 2
+keywords = ["password", "passwd", "_pass"]
+
+[[rules]]
+id = "castuo-literal-api-key"
+description = "Literal API key assigned to a *API_KEY / *_TOKEN / *_SECRET variable"
+regex = '''(?i)\b[A-Z0-9_]*(API_KEY|APIKEY|_TOKEN|_SECRET)\b\s*[:=]\s*["']?([^\s"'$<{][^\s"']{7,})["']?'''
+secretGroup = 2
+keywords = ["api_key", "apikey", "_token", "_secret"]
+
+# Placeholders, env lookups and documented example values are not secrets.
+[allowlist]
+description = "Placeholders and indirections"
+regexTarget = "match"
+regexes = [
+  '''(?i)(YOUR_|CHANGE_?ME|FILL_?ME|REPLACE|PLACEHOLDER|EXAMPLE|DUMMY|REDACTED|TU_|<[A-Z_]+>|xxx+|\*{3,})''',
+  '''(?i)(os\.getenv|os\.environ|getenv\(|process\.env|\$\{|\$\(|secrets\.|settings\.|config\.)''',
+  '''(?i)(test|fake|demo)[-_]?(password|secret|key|token)''',
+]
+paths = [
+  '''(^|/)\.gitleaks\.toml$''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)node_modules/''',
+]
