@@ -95,3 +95,11 @@ promotion: BLOCKED
 ## License
 
 The protocol text and templates are published for independent verification and review. See `LICENSE` for the repository license.
+
+## CASTÚO evidence-scoped integration
+
+See the [ecosystem integration record](docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md) for the current capability, evidence, security and promotion boundary.
+
+## CASTÚO Deep Audit — 2026-08-22
+
+This repository received the second evidence-scoped ecosystem audit. The local audit record is [CASTUO_DEEP_AUDIT_2026-08-22.md](docs/CASTUO_DEEP_AUDIT_2026-08-22.md). This link records traceability only; it does not claim production readiness, certification, field validation or independent review.
