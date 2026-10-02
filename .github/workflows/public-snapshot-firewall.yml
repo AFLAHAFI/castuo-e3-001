@@ -1,15 +1,19 @@
 name: Public snapshot claim firewall
 
 on:
+  # Every PR: authority-boundary validation always runs.
   pull_request:
-    paths:
-      - "public/status-snapshot.json"
-      - "scripts/validate_public_snapshot_firewall.py"
   push:
     branches: [main]
     paths:
       - "public/status-snapshot.json"
       - "scripts/validate_public_snapshot_firewall.py"
+      - "README.md"
+      - "docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md"
+      - "docs/CASTUO_DEEP_AUDIT_2026-08-22.md"
+      - "docs/governance/CASTUO-ECOSYSTEM-SYNC-2026-08-22.md"
+      - "scripts/validate_public_snapshot.py"
+      - ".github/workflows/public-snapshot-firewall.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,5 +24,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Snapshot present: always validated. Snapshot absent: reported as
+      # NOT_APPLICABLE, never as PASS. Removing an existing snapshot: BLOCKED.
       - name: Validate public snapshot claim boundary
-        run: python3 scripts/validate_public_snapshot_firewall.py public/status-snapshot.json
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          snapshot="public/status-snapshot.json"
+          if [ -f "$snapshot" ]; then
+            python3 scripts/validate_public_snapshot_firewall.py "$snapshot"
+            echo "Public snapshot check: PASS — validated $snapshot." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ -n "${BASE:-}" ] && git cat-file -e "${BASE}:${snapshot}" 2>/dev/null; then
+            echo "Public snapshot check: BLOCKED — $snapshot was removed by this change." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "Public snapshot check: NOT_APPLICABLE — $snapshot is absent." | tee -a "$GITHUB_STEP_SUMMARY"
+
+  authority-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Self-test documentation gate
+        run: python3 scripts/validate_public_snapshot.py --self-test
+      - name: Validate E3 authority boundaries (README and historical records)
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_public_snapshot.py --root . | tee validation.txt
+          grep -E '^(Authority boundary|Historical document) check:' validation.txt >> "$GITHUB_STEP_SUMMARY"
