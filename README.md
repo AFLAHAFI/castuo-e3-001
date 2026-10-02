@@ -11,10 +11,11 @@ The protocol freezes the fixture, source commit, commands, expected decisions, h
 ```text
 castuo-evidence
   → frozen fixture and replay artifacts
-castuo-evolution
-  → validator, signed review quorum and G2 gate
-Castuo-system
-  → bounded implementation and protected staging-rls
+castuo-e3-001 (this repository)
+  → public protocol, external bundle validator and read-only G2 evaluator
+Castuo-system (private)
+  → canonical authority: bounded implementation, protected staging-rls
+    and promotion decisions
 CASTÚO Field Signal Ledger
   → public status and claim boundary
 ```
@@ -28,10 +29,23 @@ freeze package
 → two independent humans sign review entries
 → external bundle validator passes
 → G2 evaluator passes
-→ protected staging-rls handoff
+→ evidence handed to the canonical authority (Castuo-system) for a
+  staging-rls and promotion decision
 ```
 
-The first unmet predicate stops the sequence. `oneA` remains false and `promotion` remains `BLOCKED` throughout this protocol.
+The first unmet predicate stops the sequence. `oneA` remains false and `promotion` remains `BLOCKED` throughout this protocol. A passing G2 evaluation is evidence within the declared scope, not a promotion decision.
+
+## Authority and Promotion Boundary
+
+E3-001 is a bounded public protocol for controlled independent reproduction.
+
+A successful reproduction may provide evidence within the declared scope. It does not independently validate, certify or promote the private core.
+
+Castuo-system remains the private canonical authority for current technical state and promotion decisions.
+
+castuo-evolution may contain historical or prepared governance material, but it is not a promotion authority, synchronized source of truth or validation gate for E3-001.
+
+The public protocol is intended to contain enough information to reproduce the declared bounded claim without exposing non-public implementation, credentials, sensitive IP or private operational material. Controlled-review material may be provided under defined review conditions where appropriate.
 
 ## Repository contents
 
@@ -73,10 +87,10 @@ promotion: BLOCKED
 
 ## Related CASTÚO surfaces
 
-- [Governance control plane](https://github.com/Traky12/castuo-evolution)
-- [Core system](https://github.com/Traky12/Castuo-system)
-- [Public evidence profile](https://github.com/Traky12/Traky12)
-- [Public status dashboard](https://github.com/Traky12/castuo-live-status-dashboard)
+- `Castuo-system` *(private)*: canonical technical authority
+- [Public profile and claim boundary](https://github.com/Traky12/Traky12)
+- `castuo-evolution` *(private)*: evolution and governance workspace; not an authority
+- `castuo-live-status-dashboard` *(private)*: status dashboard; not public evidence
 
 ## License
 
