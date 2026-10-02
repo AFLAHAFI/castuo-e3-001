@@ -98,7 +98,9 @@ The protocol text and templates are published for independent verification and r
 
 ## CASTÚO evidence-scoped integration
 
-See the [ecosystem integration record](docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md) for the current capability, evidence, security and promotion boundary.
+Historical integration records, such as the [ecosystem integration record of 2026-08-22](docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md), may provide traceability for their declared snapshot date. They do not define the current public authority model, current technical state, promotion state or evidence boundary.
+
+Current authority and evidence boundaries are defined by the current README and the repositories explicitly identified as canonical public surfaces.
 
 ## CASTÚO Deep Audit — 2026-08-22
 
