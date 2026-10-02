@@ -27,7 +27,7 @@ jobs:
       name: public-snapshot
     steps:
       - name: Checkout frozen protocol repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

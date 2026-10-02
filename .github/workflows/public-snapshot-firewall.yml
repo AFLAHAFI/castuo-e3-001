@@ -19,6 +19,6 @@ jobs:
   firewall:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate public snapshot claim boundary
         run: python3 scripts/validate_public_snapshot_firewall.py public/status-snapshot.json
