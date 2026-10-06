@@ -6,6 +6,14 @@ E3-001 is the public, evidence-scoped protocol for independently replaying and r
 
 The protocol freezes the fixture, source commit, commands, expected decisions, hashes, runner attestation, human review and G2 handoff as separate, inspectable artifacts.
 
+## Architectural identity
+
+- **Architectural name:** `castuo-replay-protocol`
+- **Role:** Controlled external replay and independent-review protocol.
+- **Boundary:** Reproduction protocol within declared scope; not a certification, promotion or runtime authority.
+- **Status:** `PENDING`
+- **Quality profile:** [`.castuo/repository-profile.yaml`](.castuo/repository-profile.yaml)
+
 ## Chain of custody
 
 ```text
