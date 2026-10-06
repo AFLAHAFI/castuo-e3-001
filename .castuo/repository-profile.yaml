@@ -1,0 +1,36 @@
+schema_version: "1.0"
+repository:
+  github_slug: "Traky12/castuo-e3-001"
+  architectural_name: "castuo-replay-protocol"
+  layer: "evidence"
+  lifecycle: "active"
+  visibility: "public"
+  authority: "supporting"
+claim:
+  status: "PENDING"
+  boundary: "Controlled independent reproduction protocol; not a certification or promotion authority."
+regulatory:
+  gdpr: "CONDITIONAL"
+  ai_act: "CONDITIONAL"
+  data_act: "NOT_APPLICABLE"
+  nis2: "CONDITIONAL"
+  cra: "CONDITIONAL"
+  accessibility: "CONDITIONAL"
+  sector_specific: []
+resilience:
+  offline_mode: "REQUIRED"
+  recovery: "REQUIRED"
+  rollback: "REQUIRED"
+  replay: "REQUIRED"
+  vendor_exit: "OPTIONAL"
+evidence:
+  provenance: "REQUIRED"
+  reproducibility: "REQUIRED"
+  independent_review: "REQUIRED"
+security:
+  secret_scan: true
+  dependency_scan: true
+  protected_branch: true
+human_gate:
+  required_for_promotion: true
+  autonomy_to_promote: false
