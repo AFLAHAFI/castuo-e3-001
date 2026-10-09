@@ -11,6 +11,6 @@ __pycache__/
 external-evidence-validation.json
 g2-decision.json
 runner-attestation.json
-demo/
+/demo/
 build/
 *.egg-info/
