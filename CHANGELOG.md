@@ -5,6 +5,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 ## [Unreleased]
 
 ### Added
+- Container image `ghcr.io/traky12/e3bundle` for `linux/amd64` and `linux/arm64` (non-root, no `latest` tag), built from the release tag by `container.yml` with SBOM, build provenance and a GitHub artifact attestation. Pull requests that touch the image are built and smoke-tested (valid bundle exit 0, tampered bundle exit 1).
 - Reproduction report form: tested path (CLI or browser demo), version, environment, commands, exit codes, friction, evidence and an independence confirmation, for the five-tester gate in #30.
 - Browser demo in `docs/demo/`, published with GitHub Pages: verifies the `v0.1.1` example bundles with WebCrypto (SHA-256, Ed25519) under eight tampering scenarios, and creates and signs new bundles that the CLI verifies. The `pages.yml` workflow takes the bundles and CLI from the release tag and fails if the demo and the CLI disagree.
 

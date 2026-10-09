@@ -30,6 +30,22 @@ Verify the signed example bundles without installing anything: **[open the brows
 
 The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519 verification locally with WebCrypto. You can tamper with the files in eight ways, or create and sign your own bundle and verify it later with the CLI. On every change, CI checks that the demo gives the same result as the `v0.1.1` CLI (`docs/demo/tests/conformance.mjs`). Data is synthetic; a successful verification does not certify that content is true.
 
+## Run with Docker
+
+No Python needed. Release images for `linux/amd64` and `linux/arm64` are published to GitHub Container Registry by the `container.yml` workflow, built from the release tag with an SBOM and build provenance:
+
+```bash
+docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.1   verify examples/bundles/valid --min-signatures 2   --trusted-keys examples/bundles/trusted-keys.json --format text
+```
+
+The image runs as a non-root user with `/data` as its working directory and makes no network calls. For repeatable runs, pin the digest shown on the release page instead of the tag, and check where it was built:
+
+```bash
+gh attestation verify oci://ghcr.io/traky12/e3bundle:0.1.1 --owner Traky12
+```
+
+There is no `latest` tag while the project is alpha.
+
 ## 30-second demo
 
 ![Terminal: the valid bundle verifies with exit code 0; the tampered bundle fails with hash mismatch: data/readings.csv and exit code 1](docs/assets/demo.svg)

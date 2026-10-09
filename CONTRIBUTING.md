@@ -47,6 +47,13 @@ python -m pytest tests -v
 
 The unit and CLI test job runs on Ubuntu, macOS and Windows with Python 3.11, 3.12 and 3.13. The composite GitHub Action and clean-wheel packaging smoke remain on Ubuntu. Symlink tests skip only when the current runner cannot create them; other platform-specific failures must be investigated, not waived.
 
+To build and smoke-test the container image locally:
+
+```bash
+docker build -t e3bundle:local .
+docker run --rm -v "$PWD/examples/bundles:/data:ro" e3bundle:local verify valid --min-signatures 2 --trusted-keys trusted-keys.json --format text
+```
+
 The S-001A validator's synthetic demo is expected to report `DEMO_VALIDATED`, never `VERIFIED_FOR_G2`, and the G2 evaluator must block it. That is an intentional assurance boundary, not a failing test.
 
 ## Pull requests

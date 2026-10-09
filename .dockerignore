@@ -1,0 +1,16 @@
+# Only pyproject.toml, README.md, LICENSE and scripts/ are needed to build the image.
+.git
+.github
+.castuo
+docs
+demo
+examples
+schemas
+templates
+tests
+**/__pycache__
+**/*.pyc
+.venv
+build
+dist
+*.egg-info
