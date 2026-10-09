@@ -229,11 +229,141 @@ class E3BundleTests(unittest.TestCase):
             self.skipTest(f"symlinks unavailable: {exc}")
         self.assert_failed("symlink not allowed: report.txt")
 
+    def test_extra_symlink_is_rejected_even_when_extra_files_are_allowed(self):
+        target = self.root / "extra-target.txt"
+        target.write_text("outside bundle\n", encoding="utf-8")
+        link = self.bundle / "extra-link.txt"
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            self.skipTest(f"symlinks unavailable: {exc}")
+        code, report = self.verify("--allow-extra")
+        self.assertEqual(code, 1, report)
+        self.assertTrue(
+            any(
+                "symlinks are not allowed in a bundle: extra-link.txt" in x
+                for x in report["findings"]
+            ),
+            report["findings"],
+        )
+
+    def test_symlinked_reserved_metadata_is_rejected_before_reading(self):
+        manifest_path = self.bundle / "manifest.json"
+        external_manifest = self.root / "outside-manifest.json"
+        external_manifest.write_bytes(manifest_path.read_bytes())
+        manifest_path.unlink()
+        try:
+            manifest_path.symlink_to(external_manifest)
+        except OSError as exc:
+            self.skipTest(f"symlinks unavailable: {exc}")
+        proc = run("verify", self.bundle)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn(
+            "symlinks are not allowed in a bundle: manifest.json",
+            report["findings"],
+        )
+
+        manifest_path.unlink()
+        manifest_path.write_bytes(external_manifest.read_bytes())
+        self.sign("alice")
+        signatures_path = self.bundle / "signatures.json"
+        external_signatures = self.root / "outside-signatures.json"
+        external_signatures.write_bytes(signatures_path.read_bytes())
+        signatures_path.unlink()
+        signatures_path.symlink_to(external_signatures)
+        proc = run("verify", self.bundle, "--min-signatures", 1)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn(
+            "symlinks are not allowed in a bundle: signatures.json",
+            report["findings"],
+        )
+
+    def test_symlinked_bundle_root_is_rejected(self):
+        alias = self.root / "bundle-alias"
+        try:
+            alias.symlink_to(self.bundle, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"directory symlinks unavailable: {exc}")
+        proc = run("verify", alias)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn("bundle directory must not be a symlink", report["findings"])
+
     def test_manifest_refuses_to_overwrite_signed_bundle(self):
         self.sign("alice")
         proc = run("manifest", self.bundle, "--bundle-id", "demo-002")
         self.assertEqual(proc.returncode, 2)
         self.assertIn("would invalidate", proc.stderr)
+
+    def test_negative_min_signatures_is_an_input_error(self):
+        for output_format in ("json", "text"):
+            with self.subTest(output_format=output_format):
+                proc = run(
+                    "verify", self.bundle, "--min-signatures", -1,
+                    "--format", output_format,
+                )
+                self.assertEqual(proc.returncode, 2)
+                self.assertEqual(proc.stderr, "")
+                if output_format == "json":
+                    report = json.loads(proc.stdout)
+                    self.assertEqual(report["status"], "ERROR")
+                    self.assertTrue(
+                        any("--min-signatures must be >= 0" in x for x in report["findings"]),
+                        report["findings"],
+                    )
+                else:
+                    self.assertEqual(
+                        proc.stdout,
+                        "ERROR\n  - --min-signatures must be >= 0\n",
+                    )
+
+    def test_noncanonical_manifest_paths_are_rejected(self):
+        unsafe_paths = (
+            "./report.txt",
+            "data//readings.csv",
+            "data/./readings.csv",
+            "report.txt/",
+            "./manifest.json",
+            "\x00bad",
+        )
+        manifest_path = self.bundle / "manifest.json"
+        for unsafe_path in unsafe_paths:
+            with self.subTest(path=unsafe_path):
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest["files"][0]["path"] = unsafe_path
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                self.assert_failed(f"unsafe path: {unsafe_path}")
+
+    def test_output_inside_bundle_is_rejected_without_mutating_bundle(self):
+        output = self.bundle / "verification.json"
+        before = {
+            path.relative_to(self.bundle).as_posix(): path.read_bytes()
+            for path in self.bundle.rglob("*")
+            if path.is_file()
+        }
+        proc = run("verify", self.bundle, "--output", output)
+        self.assertEqual(proc.returncode, 2)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertTrue(
+            any(
+                "--output must be outside the bundle directory" in x
+                for x in report["findings"]
+            ),
+            report["findings"],
+        )
+        self.assertFalse(output.exists())
+        after = {
+            path.relative_to(self.bundle).as_posix(): path.read_bytes()
+            for path in self.bundle.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(before, after)
 
 
 if __name__ == "__main__":

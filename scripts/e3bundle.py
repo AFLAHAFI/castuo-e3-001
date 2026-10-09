@@ -78,10 +78,25 @@ def write_json(path: Path, value: Any) -> None:
 
 
 def is_safe_relpath(value: Any) -> bool:
-    if not isinstance(value, str) or not value or "\\" in value or ":" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or ":" in value
+        or "\x00" in value
+    ):
+        return False
+    # Reject path aliases such as "./file", "a//b" and "a/./b". These can
+    # otherwise name the same filesystem object under different manifest paths.
+    if any(part in ("", ".", "..") for part in value.split("/")):
         return False
     posix = PurePosixPath(value)
-    return not posix.is_absolute() and ".." not in posix.parts and "." not in posix.parts
+    return (
+        posix.as_posix() == value
+        and bool(posix.parts)
+        and not posix.is_absolute()
+        and ".." not in posix.parts
+    )
 
 
 def has_symlink(bundle: Path, relpath: str) -> bool:
@@ -95,12 +110,16 @@ def has_symlink(bundle: Path, relpath: str) -> bool:
 
 def bundle_files(bundle: Path) -> list[str]:
     found = []
+    if bundle.is_symlink():
+        raise InputError("bundle directory must not be a symlink")
+    if not bundle.is_dir():
+        raise InputError(f"bundle directory not found: {bundle}")
     for path in sorted(bundle.rglob("*")):
         relpath = path.relative_to(bundle).as_posix()
-        if relpath in RESERVED:
-            continue
         if path.is_symlink():
             raise InputError(f"symlinks are not allowed in a bundle: {relpath}")
+        if relpath in RESERVED:
+            continue
         if path.is_file():
             found.append(relpath)
     return found
@@ -182,6 +201,15 @@ def cmd_sign(args: argparse.Namespace) -> int:
 
 
 def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, allow_extra: bool) -> dict[str, Any]:
+    # Do not follow a symlinked bundle root or reserved metadata files before
+    # scanning. The manifest/signatures are trust-boundary inputs themselves.
+    if bundle.is_symlink():
+        raise InputError("bundle directory must not be a symlink")
+    if not bundle.is_dir():
+        raise InputError(f"bundle directory not found: {bundle}")
+    for reserved_name in RESERVED:
+        if (bundle / reserved_name).is_symlink():
+            raise InputError(f"symlinks are not allowed in a bundle: {reserved_name}")
     manifest = load_json(bundle / MANIFEST)
     if not isinstance(manifest, dict):
         raise InputError(f"{MANIFEST} must be a JSON object")
@@ -217,12 +245,12 @@ def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, al
         else:
             verified += 1
 
+    try:
+        present = bundle_files(bundle)
+    except InputError as exc:
+        findings.append(str(exc))
+        present = []
     if not allow_extra:
-        try:
-            present = bundle_files(bundle)
-        except InputError as exc:
-            findings.append(str(exc))
-            present = []
         findings.extend(f"undeclared file: {relpath}" for relpath in present if relpath not in declared)
 
     expected_hash = manifest_hash(manifest)
@@ -299,6 +327,16 @@ def format_text_report(report: dict[str, Any]) -> str:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
+    if args.min_signatures < 0:
+        raise InputError("--min-signatures must be >= 0")
+    if args.output is not None:
+        bundle_root = args.bundle.resolve()
+        output_path = args.output.resolve()
+        if output_path == bundle_root or bundle_root in output_path.parents:
+            raise InputError(
+                "--output must be outside the bundle directory; "
+                "verification must not modify the bundle"
+            )
     trusted = None
     if args.trusted_keys is not None:
         trusted = load_json(args.trusted_keys)
