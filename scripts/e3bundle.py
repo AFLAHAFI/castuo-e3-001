@@ -78,7 +78,13 @@ def write_json(path: Path, value: Any) -> None:
 
 
 def is_safe_relpath(value: Any) -> bool:
-    if not isinstance(value, str) or not value or "\\" in value or ":" in value or "\x00" in value:
+    if (
+        not isinstance(value, str)
+        or not value
+        or "\\" in value
+        or ":" in value
+        or "\x00" in value
+    ):
         return False
     # Reject path aliases such as "./file", "a//b" and "a/./b". These can
     # otherwise name the same filesystem object under different manifest paths.
