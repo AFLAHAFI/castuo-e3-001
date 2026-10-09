@@ -78,14 +78,19 @@ def write_json(path: Path, value: Any) -> None:
 
 
 def is_safe_relpath(value: Any) -> bool:
-    if not isinstance(value, str) or not value or "\\" in value or ":" in value:
+    if not isinstance(value, str) or not value or "\\" in value or ":" in value or "\x00" in value:
         return False
     # Reject path aliases such as "./file", "a//b" and "a/./b". These can
     # otherwise name the same filesystem object under different manifest paths.
     if any(part in ("", ".", "..") for part in value.split("/")):
         return False
     posix = PurePosixPath(value)
-    return posix.as_posix() == value and bool(posix.parts) and not posix.is_absolute() and ".." not in posix.parts
+    return (
+        posix.as_posix() == value
+        and bool(posix.parts)
+        and not posix.is_absolute()
+        and ".." not in posix.parts
+    )
 
 
 def has_symlink(bundle: Path, relpath: str) -> bool:
@@ -221,12 +226,12 @@ def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, al
         else:
             verified += 1
 
+    try:
+        present = bundle_files(bundle)
+    except InputError as exc:
+        findings.append(str(exc))
+        present = []
     if not allow_extra:
-        try:
-            present = bundle_files(bundle)
-        except InputError as exc:
-            findings.append(str(exc))
-            present = []
         findings.extend(f"undeclared file: {relpath}" for relpath in present if relpath not in declared)
 
     expected_hash = manifest_hash(manifest)
@@ -309,7 +314,10 @@ def cmd_verify(args: argparse.Namespace) -> int:
         bundle_root = args.bundle.resolve()
         output_path = args.output.resolve()
         if output_path == bundle_root or bundle_root in output_path.parents:
-            raise InputError("--output must be outside the bundle directory; verification must not modify the bundle")
+            raise InputError(
+                "--output must be outside the bundle directory; "
+                "verification must not modify the bundle"
+            )
     trusted = None
     if args.trusted_keys is not None:
         trusted = load_json(args.trusted_keys)
