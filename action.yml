@@ -70,8 +70,9 @@ runs:
         args=(verify "$BUNDLE" --min-signatures "$MIN_SIGNATURES" --output "$REPORT_PATH")
         if [ -n "$TRUSTED_KEYS" ]; then args+=(--trusted-keys "$TRUSTED_KEYS"); fi
         if [ "$ALLOW_EXTRA" = "true" ]; then args+=(--allow-extra); fi
-        e3bundle "${args[@]}" > /dev/null
-        code=$?
+        # Actions runs bash with -e: capture the exit code instead of aborting.
+        code=0
+        e3bundle "${args[@]}" > /dev/null || code=$?
         if [ -f "$REPORT_PATH" ]; then
           status=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$REPORT_PATH")
         else
