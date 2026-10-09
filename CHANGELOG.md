@@ -4,6 +4,13 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-10
+
+### Security
+- `e3bundle verify` rejects manifest paths that alias the same file under another name (`./file`, `a//b`, `a/./b`, trailing `/`) and paths containing NUL, so one file cannot be declared twice under different names.
+- `e3bundle verify` rejects a symlinked bundle directory and symlinked `manifest.json` / `signatures.json` before reading them, and reports symlinks inside the bundle even with `--allow-extra`.
+- `e3bundle verify` refuses `--output` inside the bundle directory (verification must not modify the bundle) and a negative `--min-signatures` (exit 2).
+
 ### Added
 - Browser demo, local bundles (`paquete.html`): verify a folder from your device in the tab. `importer.js` checks names and sizes before reading anything (≤200 files, ≤10 MiB each, ≤50 MiB total, safe unambiguous paths ≤255 chars / 16 levels; no ZIP) and verifies nothing if any entry is rejected. Imported public keys are not trusted until you select them; the selection can be downloaded as a keys file. Input order and decoding follow the CLI; the UI suite compares 13 local folders with `e3bundle verify` from the tag. Known difference: symlinks (see `docs/demo/THREAT-MODEL.md`).
 - Browser demo, advanced mode: a Guided / Advanced switch (`#avanzado` deep link) over the same verification. Advanced shows the exact verifier data and answers four separate questions per signature (valid Ed25519, covers this manifest, key pinned by you, counts for the threshold) plus the threshold count, and downloads `e3bundle-report.json` built in the page (sorted keys and `limitations`, as the CLI writes it; no keys or file contents). Guided is the default.
@@ -45,5 +52,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 - README reorganised product-first (problem, install, demo, limits, security, roadmap); the E3-001 protocol, authority boundary and history follow below, unchanged in substance.
 - `PROTOCOL.md` states that `scripts/run_s001a_foreign_replay.py` is not published in this repository.
 
-[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0
