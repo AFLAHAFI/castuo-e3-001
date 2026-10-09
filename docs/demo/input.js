@@ -26,18 +26,22 @@
    * trustedText: contents of the trusted keys file, or null when no keys are pinned.
    * Returns { error } or { input: { manifest, signatures, trusted }, findings }.
    */
-  function parseVerifyInput({ manifestText, signaturesText, trustedText, trustedName }) {
-    const keysName = trustedName || 'trusted-keys.json';
-    let trusted = null;
-    if (trustedText !== null && trustedText !== undefined) {
-      const t = readJson(trustedText, keysName);
-      if (!t.ok) return inputError(t.finding);
-      const v = t.value;
-      if (v === null || typeof v !== 'object' || Array.isArray(v) || !Object.values(v).every((x) => typeof x === 'string')) {
-        return inputError('trusted keys must be a JSON object {signer_id: public_key_b64}');
-      }
-      trusted = v;
+  /** The CLI reads --trusted-keys before anything else. Returns { error } or { trusted }. */
+  function parseTrusted(trustedText, trustedName) {
+    if (trustedText === null || trustedText === undefined) return { trusted: null };
+    const t = readJson(trustedText, trustedName || 'trusted-keys.json');
+    if (!t.ok) return inputError(t.finding);
+    const v = t.value;
+    if (v === null || typeof v !== 'object' || Array.isArray(v) || !Object.values(v).every((x) => typeof x === 'string')) {
+      return inputError('trusted keys must be a JSON object {signer_id: public_key_b64}');
     }
+    return { trusted: v };
+  }
+
+  function parseVerifyInput({ manifestText, signaturesText, trustedText, trustedName }) {
+    const pt = parseTrusted(trustedText, trustedName);
+    if (pt.error) return pt;
+    const trusted = pt.trusted;
     const m = readJson(manifestText, 'manifest.json');
     if (!m.ok) return inputError(m.finding);
     if (m.value === null || typeof m.value !== 'object' || Array.isArray(m.value)) {
@@ -67,7 +71,27 @@
     return Object.assign({}, result, { exitCode: 1, report: Object.assign({}, result.report, { findings: merged, status: 'FAILED' }) });
   }
 
-  const api = { parseVerifyInput, withInputFindings };
+  // The CLI adds this text to every JSON report; browser reports carry it too.
+  const LIMITATIONS = 'Checks integrity of declared files and validity of signatures over the manifest only. ' +
+    'Does not prove the content is true, signer identity without pinned keys, signer independence, ' +
+    'certification, compliance or production authorization.';
+
+  /** The report as `e3bundle verify --output` writes it: limitations added, sorted keys, two-space indent. */
+  function reportJson(report) {
+    const full = Object.assign({}, report, { limitations: LIMITATIONS });
+    return JSON.stringify(full, Object.keys(full).sort(), 2);
+  }
+
+  /** Saves text as a file through a local blob: URL; nothing is uploaded. */
+  function saveText(doc, text, filename) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = doc.createElement('a');
+    a.href = url; a.download = filename;
+    doc.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  const api = { parseVerifyInput, parseTrusted, withInputFindings, LIMITATIONS, reportJson, saveText };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.E3Input = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

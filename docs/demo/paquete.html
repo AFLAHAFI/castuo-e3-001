@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e3bundle · Verifica tu paquete local</title>
+<meta name="description" content="Verifica en tu navegador una carpeta e3.bundle.v1 de tu equipo: SHA-256 y Ed25519 con WebCrypto, sin subir nada, con el mismo resultado que el CLI v0.1.1.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="dark">
+  <header class="topbar"><div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.jpg" alt="">CASTÚO-SYSTEM</a>
+    <nav aria-label="Demo">
+      <a href="./">1 · Verificar</a>
+      <a href="paquete.html" aria-current="page">Tu paquete</a>
+      <a href="crear.html">2 · Crear y firmar</a>
+      <a class="gh" href="https://github.com/Traky12/castuo-e3-001">GitHub</a>
+    </nav>
+  </div></header>
+  <section class="hero"><div class="wrap">
+    <div class="text">
+      <p class="eyebrow">e3bundle v0.1.1 · tu paquete · en este navegador</p>
+      <h1>Verifica un paquete e3.bundle.v1 de tu equipo.</h1>
+      <p class="lede">Elige la carpeta del paquete. Los ficheros se leen en esta pestaña y se comprueban con WebCrypto (SHA-256, Ed25519); no se envían a ningún servidor y la página solo puede conectarse a su propio origen.</p>
+      <p class="small-dark">El formato e3.bundle.v1 es experimental. Un VERIFIED no dice que el contenido sea verdadero, ni quién firmó si no fijas claves, ni que esto sea una certificación.</p>
+    </div>
+    <img src="assets/logo.jpg" alt="Logotipo oficial de CASTÚO-SYSTEM" width="190" height="190">
+  </div></section>
+</div>
+
+<main class="wrap">
+  <div class="alert" id="unsupported" hidden>Tu navegador no admite Ed25519 en WebCrypto: aquí no se pueden comprobar firmas. Verifica la carpeta con el CLI: <code>e3bundle verify &lt;carpeta&gt; --min-signatures 1</code>.</div>
+  <div class="notice" role="note"><strong>Límites de la demo en el navegador</strong> (más estrictos que el CLI, para proteger la pestaña): hasta 200 ficheros, 10 MiB por fichero, 50 MiB en total, rutas de hasta 255 caracteres y 16 niveles. Sin ZIP. Si cualquier fichero queda fuera, no se verifica nada: usa el CLI.</div>
+
+  <section class="card" aria-labelledby="folder-title">
+    <h2 id="folder-title"><span class="num">1</span>Carpeta del paquete</h2>
+    <div class="field">
+      <label for="folder">Elige la carpeta que contiene manifest.json, signatures.json y los ficheros declarados</label>
+      <input id="folder" type="file" webkitdirectory multiple aria-describedby="folderHint">
+      <p class="hint" id="folderHint">Se leen los nombres y tamaños antes de abrir ningún fichero.</p>
+    </div>
+    <p class="plan-problem" id="planProblem" role="status"></p>
+    <ul class="plan" id="plan" aria-label="Ficheros de la carpeta"></ul>
+  </section>
+
+  <section class="card" aria-labelledby="keys-title">
+    <h2 id="keys-title"><span class="num">2</span>Claves de confianza <span class="hint">opcional</span></h2>
+    <div class="field">
+      <label for="keys">Fichero de claves públicas (trusted-keys.json: {"firmante": "clave_b64"})</label>
+      <input id="keys" type="file" accept=".json,application/json" aria-describedby="keysHint">
+      <p class="hint" id="keysHint">Importar claves no las hace confiables: tú decides cuáles fijar.</p>
+    </div>
+    <fieldset class="trust-mode">
+      <legend>Confianza</legend>
+      <label class="radio"><input type="radio" name="trust" id="trustNone" value="none" checked> No fijar claves: la confianza queda sin comprobar</label>
+      <label class="radio"><input type="radio" name="trust" id="trustPinned" value="pinned"> Fijar solo las claves que marque</label>
+    </fieldset>
+    <p class="hint" id="keysNote"></p>
+    <ul class="key-list" id="keyList" aria-label="Claves del fichero"></ul>
+    <div class="chips"><button class="btn secondary" id="downloadKeys" type="button" disabled>Descargar las claves marcadas</button></div>
+  </section>
+
+  <section class="card" aria-labelledby="run-title">
+    <h2 id="run-title"><span class="num">3</span>Verificar</h2>
+    <div class="row start">
+      <div class="field narrow">
+        <label for="min">Firmas mínimas (--min-signatures)</label>
+        <input id="min" type="number" value="1" min="0" max="1000" step="1" inputmode="numeric" aria-describedby="minError">
+        <p class="hint error-text" id="minError"></p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="verify" type="button" disabled>Verificar paquete</button>
+        <button class="btn secondary" id="reset" type="button" aria-describedby="resetNote">Reiniciar sesión</button>
+      </div>
+    </div>
+    <label for="progress" class="hint">Lectura de ficheros</label>
+    <progress id="progress" max="100" value="0"></progress>
+    <p class="hint" id="progressText" aria-live="polite">Elige una carpeta para empezar.</p>
+    <p class="hint" id="resetNote">Reiniciar descarta la carpeta, las claves y el resultado. La página deja de guardarlos; el navegador libera la memoria cuando decide.</p>
+  </section>
+
+  <section class="result" id="resBox" hidden aria-live="polite" aria-labelledby="res-title">
+    <div class="result-main">
+      <p class="eyebrow">Resultado de tu paquete</p>
+      <h2 id="res-title" class="status-line"><span class="status" id="status"></span><span class="exit" id="exit"></span></h2>
+      <ul class="summary" id="summary"></ul>
+    </div>
+    <div class="result-explain">
+      <p class="eyebrow">Hallazgos</p>
+      <ul class="findings" id="findings"></ul>
+      <p class="eyebrow">Qué significa</p>
+      <p class="next" id="meaning"></p>
+      <p class="eyebrow">Mismo resultado con el CLI</p>
+      <pre class="terminal" id="cli"></pre>
+      <div class="chips"><button class="btn brass" id="download" type="button">Descargar e3bundle-report.json</button></div>
+    </div>
+  </section>
+</main>
+
+<footer class="dark"><div class="wrap">
+  <span>e3bundle <a href="https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1">v0.1.1</a> · <a href="https://github.com/Traky12/castuo-e3-001/blob/main/docs/demo/THREAT-MODEL.md">modelo de amenazas</a> · <a href="https://github.com/Traky12/castuo-e3-001">código de esta página</a></span>
+  <span>Sin cookies, sin analítica, sin peticiones a terceros. El logotipo identifica el proyecto; no implica certificación ni madurez operativa.</span>
+</div></footer>
+<script src="verifier.js"></script>
+<script src="input.js"></script>
+<script src="importer.js"></script>
+<script src="paquete.js"></script>
+</body>
+</html>

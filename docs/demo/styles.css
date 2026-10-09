@@ -150,3 +150,19 @@ footer.dark a { color: var(--brass-light); }
 .mode-btn[aria-pressed="true"] { background: var(--ink); color: #fff; }
 .mode-btn:disabled { opacity: .55; cursor: not-allowed; }
 .phases h2 .hint { font: 400 14px var(--body); margin-left: 8px; }
+/* Local bundle page. */
+.plan { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 14px; max-height: 360px; overflow: auto; }
+.plan li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.plan .mono { overflow-wrap: anywhere; }
+.plan-problem { margin: 0; font-size: 15px; color: var(--ink-2); }
+.plan-problem.bad { color: var(--bad); font-weight: 600; }
+.trust-mode { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.trust-mode legend { font-weight: 600; font-size: 14px; padding: 0 6px; }
+.radio { font-weight: 400; display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.key-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.key-list li { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.key-list label { font-weight: 400; overflow-wrap: anywhere; }
+.error-text { color: var(--bad); min-height: 1em; }
+progress { width: 100%; height: 10px; accent-color: var(--leaf); }
+input[type="file"] { min-height: 44px; font: 14px var(--body); max-width: 100%; }
+input[type="number"] { min-height: 44px; padding: 0 10px; border: 1px solid #c6ccc0; border-radius: 6px; font: 15px var(--mono); width: 120px; }

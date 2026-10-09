@@ -177,7 +177,7 @@
     const trustOk = inp.trusted && r.phases.signatures.every((s) => s.trusted);
     setPill('p4', !inp.trusted ? 'warn' : (trustOk ? 'ok' : 'bad'), !inp.trusted ? 'no comprobada' : (trustOk ? 'correcto' : 'fallo detectado'));
 
-    lastReport = withLimitations(rep);
+    lastReport = rep;
     $('report').textContent = reportText();
     const original = dec.decode(data.files['data/readings.csv']);
     $('csvNote').textContent = edited ? 'Has editado el fichero: el resultado de arriba usa tu versión.' : ($('csv').value === original ? 'Contenido idéntico al firmado en v0.1.1.' : 'Este contenido es distinto del que se firmó.');
@@ -196,13 +196,7 @@
     }
   }
 
-  // The CLI adds this text to every JSON report; the browser report carries it too.
-  const LIMITATIONS = 'Checks integrity of declared files and validity of signatures over the manifest only. ' +
-    'Does not prove the content is true, signer identity without pinned keys, signer independence, ' +
-    'certification, compliance or production authorization.';
-  const withLimitations = (rep) => Object.assign({}, rep, { limitations: LIMITATIONS });
-  // Same layout as the CLI: sorted keys, two-space indent.
-  const reportText = () => JSON.stringify(lastReport, Object.keys(lastReport).sort(), 2);
+  const reportText = () => E3Input.reportJson(lastReport);
 
   // Guided shows the result and its explanation; advanced adds the verifier's exact data.
   let mode = location.hash === '#avanzado' ? 'advanced' : 'guided';
@@ -216,15 +210,12 @@
 
   // The report is built in the page and saved through a local blob: URL; nothing is uploaded.
   function downloadReport() {
-    const url = URL.createObjectURL(new Blob([reportText() + '\n'], { type: 'application/json' }));
-    const a = el('a', { href: url, download: 'e3bundle-report.json' });
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    E3Input.saveText(document, reportText() + '\n', 'e3bundle-report.json');
   }
 
   // Input could not be read: no cryptographic check ran, so no phase is shown and nothing can be VERIFIED.
   function renderInputError(err) {
-    lastReport = withLimitations(err.report);
+    lastReport = err.report;
     $('status').textContent = 'ERROR'; $('status').className = 'status ERROR';
     $('exit').textContent = 'exit ' + err.exitCode;
     $('timing').textContent = 'La verificación no ha empezado.';

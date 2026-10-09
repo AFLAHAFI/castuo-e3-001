@@ -11,6 +11,7 @@ in the demo or the tool: report privately as described in [SECURITY.md](../../SE
 |---|---|
 | Ed25519 private key made on the create page | A `CryptoKey` created with `extractable: false` (`verifier.js`), held in page memory only |
 | Text the visitor types (CSV, files, signer id) | Page memory only |
+| Files of a local bundle chosen on `paquete.html` | Read with `File.arrayBuffer()` into page memory only |
 | Verification reports | Page memory; copied only when the visitor presses a copy button |
 | Correctness of the verdict | `verifier.js` + `input.js`, kept equivalent to the `v0.1.1` CLI |
 
@@ -22,6 +23,9 @@ in the demo or the tool: report privately as described in [SECURITY.md](../../SE
 | Script injection through displayed data | Results are written with `textContent`; no `innerHTML`, `eval` or inline script; CSP `script-src 'self'`, `style-src 'self'`, `default-src 'none'` | UI suite: an injected inline script does not run and an injected inline style does not apply; the real controls raise no CSP violation |
 | Unreadable input shown as a verdict | `input.js` applies the CLI's input contract: unreadable or wrongly shaped manifest / trusted keys → `ERROR`, exit 2, no cryptographic phase shown | `tests/input-conformance.mjs` (9 malformed inputs vs the CLI from the tag) and UI cases with corrupted served files |
 | Browser verdict drifting from the CLI | `verifier.js` unchanged; deploy is blocked unless conformance and UI jobs pass | `tests/conformance.mjs` (8 scenarios + interop), `pages.yml` |
+| Hostile local folder (traversal, ambiguous names, huge or numerous files) | `importer.js` plans the import from names and sizes before reading any byte: ≤200 files, ≤10 MiB each, ≤50 MiB total, paths ≤255 characters and ≤16 levels; rejects `..`, `.`, `\`, `:`, control characters, empty segments and names that differ only in case. If anything is rejected, nothing is verified (dropping a file could turn the CLI's FAILED into VERIFIED). No ZIP. Files are held in prototype-free maps | `tests/importer.mjs` (16 checks) and the UI suite (deep path, oversized file) |
+| Imported keys treated as trusted | Keys from a file are listed unchecked and disabled until "Fijar solo las claves que marque" is chosen; only checked keys are pinned; the checked subset can be downloaded to reproduce the run with the CLI | UI suite: keys not trusted until selected; one key pinned → threshold not met, same as the CLI with that subset |
+| Local verdict differing from the CLI | Same input order as the CLI (keys file first, then manifest, then signatures); UTF-8 decoded strictly, BOM kept | UI suite compares each local folder with `e3bundle verify` from the tag (status, exit, findings): valid, tampered, undeclared, missing, malformed/BOM/missing manifest, malformed/missing signatures, bad key file |
 | Reading VERIFIED as certification or identity | Limits stated next to the result; "trust not checked" without pinned keys | Content review; claims grep in `pages.yml` |
 
 ## Residual risks and limits
@@ -43,6 +47,10 @@ in the demo or the tool: report privately as described in [SECURITY.md](../../SE
   with `.` segments (`a/./b`) are rejected as unsafe by the browser but
   normalised by the CLI. The browser is stricter in the second case. Every other
   malformed-content case in `tests/input-conformance.mjs` (23 cases) matches.
+- **Local folders.** The browser follows symbolic links and does not report
+  them; the CLI rejects symlinks, so a folder with symlinks can verify in the
+  browser and fail with the CLI. Whether hidden files are included depends on the
+  browser. Keys files over 1 MiB are not read (use the CLI).
 - **Synthetic data.** Results on this page prove the verification logic only.
   They are not an attestation, do not validate CASTÚO-SYSTEM and do not count as
   E3-001 independent review.

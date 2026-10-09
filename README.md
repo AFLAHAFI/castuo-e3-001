@@ -28,7 +28,7 @@ Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Wi
 
 Verify the signed example bundles without installing anything: **[open the browser demo](https://traky12.github.io/castuo-e3-001/)**.
 
-The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519 verification locally with WebCrypto. You can tamper with the files in eight ways, or create and sign your own bundle and verify it later with the CLI. On every change, CI checks that the demo gives the same result as the `v0.1.1` CLI (`docs/demo/tests/conformance.mjs`). Data is synthetic; a successful verification does not certify that content is true.
+The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519 verification locally with WebCrypto. You can tamper with the files in eight ways, create and sign your own bundle and verify it later with the CLI, or [verify a bundle folder from your device](https://traky12.github.io/castuo-e3-001/paquete.html) without uploading it (browser limits: 200 files, 50 MiB). On every change, CI checks that the demo gives the same result as the `v0.1.1` CLI (`docs/demo/tests/`) in Chromium, Firefox and WebKit. Data is synthetic; a successful verification does not certify that content is true.
 
 ## Run with Docker
 

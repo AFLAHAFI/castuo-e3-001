@@ -182,7 +182,7 @@ test.describe('privacy: nothing leaves the page', () => {
 });
 
 test.describe('content security policy', () => {
-  for (const file of ['index.html', 'crear.html']) {
+  for (const file of ['index.html', 'crear.html', 'paquete.html']) {
     test(`${file}: inline script and inline style are blocked`, async ({ page }) => {
       await watch(page);
       await page.goto(file);
@@ -275,7 +275,7 @@ test.describe('advanced mode', () => {
 
 test.describe('no horizontal overflow', () => {
   for (const width of [375, 768, 1440]) {
-    for (const file of ['index.html', 'index.html#avanzado', 'crear.html']) {
+    for (const file of ['index.html', 'index.html#avanzado', 'crear.html', 'paquete.html']) {
       test(`${file} at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(file);
