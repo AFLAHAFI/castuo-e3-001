@@ -6,6 +6,31 @@ E3-001 is the public, evidence-scoped protocol for independently replaying and r
 
 The protocol freezes the fixture, source commit, commands, expected decisions, hashes, runner attestation, human review and G2 handoff as separate, inspectable artifacts.
 
+## e3bundle — verify evidence bundles offline
+
+`scripts/e3bundle.py` is a small, dependency-light command-line tool (Python 3.11+, `cryptography`) that works on any directory of files, not only S-001A:
+
+- **manifest** — record the SHA-256 of every file in a bundle;
+- **sign** — append Ed25519 signatures over the canonical manifest;
+- **verify** — check, offline and read-only, that no file was changed, removed or added and that enough valid signatures are present, optionally only from pinned public keys.
+
+```bash
+python -m pip install -r requirements.txt
+
+python scripts/e3bundle.py keygen --private-key ~/keys/alice.key --signer-id alice
+python scripts/e3bundle.py manifest my-bundle --bundle-id my-bundle-001
+python scripts/e3bundle.py sign my-bundle --private-key ~/keys/alice.key --signer-id alice --role reviewer
+
+echo '{"alice": "<public_key_b64 from ~/keys/alice.pub.json>"}' > trusted.json
+python scripts/e3bundle.py verify my-bundle --min-signatures 1 --trusted-keys trusted.json
+```
+
+`verify` prints a JSON report and exits `0` (verified), `1` (verification failed, findings listed) or `2` (unreadable input). Keep private keys outside the bundle and outside any repository.
+
+**Scope.** A `VERIFIED` result means the declared files are unchanged and the required signatures are valid over this exact manifest. It does not prove that the content is true. Without `--trusted-keys` it does not establish who signed, and it never establishes signer independence. It is not a certification, compliance assessment or production authorization.
+
+The format is `e3.bundle.v1` and is **experimental**: it may change before `v1.0`. See [CHANGELOG.md](CHANGELOG.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Architectural identity
 
 - **Architectural name:** `castuo-replay-protocol`

@@ -1,0 +1,35 @@
+name: Reproduction report
+description: You tried the quickstart or verified your own bundle — tell us how it went
+labels: [reproduction]
+body:
+  - type: dropdown
+    id: what
+    attributes:
+      label: What did you run?
+      options:
+        - e3bundle quickstart
+        - S-001A demo bundle (examples/make_demo_bundle.py)
+        - My own bundle
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Worked as documented without help
+        - Worked after workarounds (describe below)
+        - Did not work
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Commands, output and anything confusing
+      render: shell
+  - type: input
+    id: env
+    attributes:
+      label: OS, Python version and repository commit
+    validations:
+      required: true
