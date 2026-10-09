@@ -252,7 +252,7 @@ class E3BundleTests(unittest.TestCase):
                 else:
                     self.assertEqual(
                         proc.stdout,
-                        "ERROR\\n  - --min-signatures must be >= 0\\n",
+                        "ERROR\n  - --min-signatures must be >= 0\n",
                     )
 
     def test_noncanonical_manifest_paths_are_rejected(self):
