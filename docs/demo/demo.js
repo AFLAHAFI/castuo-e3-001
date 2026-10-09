@@ -129,7 +129,7 @@
     $('provBundle').textContent = edited || scenario !== 'original' ? 'examples/bundles/valid @ v0.1.1, modificado en esta página' : 'examples/bundles/valid @ v0.1.1';
 
     const tb = $('integrity'); tb.replaceChildren();
-    const label = { ok: ['coincide', 'ok'], changed: ['no coincide', 'bad'], missing: ['falta', 'bad'], extra: ['no declarado', 'bad'] };
+    const label = { ok: ['coincide', 'ok'], changed: ['no coincide', 'bad'], missing: ['falta', 'bad'], extra: ['no declarado', 'bad'], invalid: ['hash declarado no válido', 'bad'] };
     for (const row of r.phases.integrity) {
       const tr = el('tr');
       tr.append(el('td', { class: 'mono' }, row.path), el('td', { class: 'hash' }, row.declared || '(no declarado)'),

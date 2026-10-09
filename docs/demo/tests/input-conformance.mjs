@@ -1,5 +1,6 @@
-// Input conformance: malformed inputs must get the same status, exit code and findings
-// in the browser input layer (input.js + verifier.js) as in the released CLI.
+// Input conformance: malformed inputs (unreadable JSON, and well-formed JSON with malformed
+// content) must get the same status, exit code and findings in the browser
+// (input.js + verifier.js) as in the released CLI.
 // Kept separate from conformance.mjs, whose eight scenarios are unchanged.
 //
 // Usage: node docs/demo/tests/input-conformance.mjs <bundles-dir> <python> <e3bundle.py>
@@ -36,6 +37,29 @@ const cases = {
   'signatures is an object': { signatures: '{}' },
   'no signatures.json': { signatures: null },
 };
+
+// Well-formed JSON with malformed content (issue #55): the verifier itself must report
+// exactly what the CLI reports.
+const M = JSON.parse(manifestText);
+const S = JSON.parse(signaturesText);
+const withManifest = (patch) => JSON.stringify(Object.assign(JSON.parse(manifestText), patch));
+const withSig = (fn) => { const s = JSON.parse(signaturesText); fn(s); return JSON.stringify(s); };
+Object.assign(cases, {
+  'files is an object': { manifest: withManifest({ files: {} }) },
+  'sha256 not 64 hex': { manifest: withManifest({ files: [{ ...M.files[0], sha256: 'sha256:XYZ' }, M.files[1]] }) },
+  'sha256 uppercase': { manifest: withManifest({ files: [{ ...M.files[0], sha256: M.files[0].sha256.toUpperCase() }, M.files[1]] }) },
+  'format missing': { manifest: JSON.stringify((({ format, ...rest }) => rest)(M)) },
+  'format other': { manifest: withManifest({ format: "e3.bundle.v2" }) },
+  'file entry not an object': { manifest: withManifest({ files: ['data/readings.csv', M.files[1]] }) },
+  'file entry without path': { manifest: withManifest({ files: [{ sha256: M.files[0].sha256 }, M.files[1]] }) },
+  'path named constructor': { manifest: withManifest({ files: [...M.files, { path: 'constructor', sha256: M.files[0].sha256 }] }) },
+  'signature is null': { signatures: withSig((s) => { s[1] = null; }) },
+  'signature is an array': { signatures: withSig((s) => { s[1] = []; }) },
+  'signer_id is a number': { signatures: withSig((s) => { s[1].signer_id = 5; }) },
+  'signature base64 with newline': { signatures: withSig((s) => { s[0].signature_b64 = s[0].signature_b64.slice(0, 20) + '\n' + s[0].signature_b64.slice(20); }) },
+  'public key base64 unpadded': { signatures: withSig((s) => { s[0].public_key_b64 = s[0].public_key_b64.replace(/=+$/, ''); }) },
+  'duplicate signature': { signatures: JSON.stringify([S[0], S[0], S[1]]) },
+});
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'e3input-'));
 // Python's and JavaScript's JSON parse errors are worded differently; compare up to the file name.

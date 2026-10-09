@@ -1,7 +1,8 @@
 /*
  * e3.bundle.v1 verifier for the browser demo.
  * Mirrors scripts/e3bundle.py as released in v0.1.1. Equivalence with that CLI is
- * checked on every change by docs/demo/tests/conformance.mjs in CI.
+ * checked on every change by docs/demo/tests/conformance.mjs (scenarios) and
+ * docs/demo/tests/input-conformance.mjs (malformed input and content) in CI.
  * Uses only WebCrypto (SHA-256, Ed25519). No network, no storage.
  */
 (function (root) {
@@ -10,8 +11,26 @@
   const FORMAT = 'e3.bundle.v1';
   const SIGNATURE_FORMAT = 'e3.signature.v1';
   const RESERVED = new Set(['manifest.json', 'signatures.json']);
+  const SHA256_RE = /^sha256:[0-9a-f]{64}$/;
+  // base64.b64decode(..., validate=True): standard alphabet only, correct padding.
+  const B64_RE = /^[A-Za-z0-9+/]*={0,2}$/;
 
   const toBytes = (x) => (typeof x === 'string' ? enc.encode(x) : x);
+  const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+  const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+  // How the CLI prints values inside findings: repr() for the format, str() for paths.
+  function pyRepr(v) {
+    if (v === undefined || v === null) return 'None';
+    if (v === true) return 'True';
+    if (v === false) return 'False';
+    if (typeof v === 'string') {
+      const q = v.includes("'") && !v.includes('"') ? '"' : "'";
+      return q + v.split('\\').join('\\\\').split(q).join('\\' + q).split('\n').join('\\n') + q;
+    }
+    return typeof v === 'number' ? String(v) : JSON.stringify(v);
+  }
+  const pyText = (v) => (typeof v === 'string' ? v : pyRepr(v));
 
   // Python json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=True)
   function pyStr(s) {
@@ -72,7 +91,10 @@
     }
   }
 
+  const strictB64 = (s) => typeof s === 'string' && s.length % 4 === 0 && B64_RE.test(s);
+
   async function verifySignature(record) {
+    if (!strictB64(record.public_key_b64) || !strictB64(record.signature_b64)) return false;
     try {
       const payload = Object.assign({}, record);
       delete payload.signature_b64;
@@ -96,16 +118,24 @@
   async function verifyBundle({ files, manifest, signatures, trusted, minSignatures }) {
     const findings = [];
     const phases = { integrity: [], signatures: [] };
-    if (manifest.format !== FORMAT) findings.push(`unsupported format: '${manifest.format}' (expected ${FORMAT})`);
+    if (manifest.format !== FORMAT) findings.push(`unsupported format: ${pyRepr(manifest.format)} (expected ${FORMAT})`);
     const entries = Array.isArray(manifest.files) ? manifest.files : [];
+    if (!Array.isArray(manifest.files)) findings.push('manifest files must be an array');
     const declared = new Set();
     let verified = 0;
-    for (const entry of entries) {
-      const path = entry && entry.path;
-      if (!isSafePath(path) || RESERVED.has(path)) { findings.push(`unsafe path: ${path}`); continue; }
+    for (let index = 0; index < entries.length; index++) {
+      const entry = entries[index];
+      const path = isObject(entry) ? entry.path : undefined;
+      const expected = isObject(entry) ? entry.sha256 : undefined;
+      if (!isSafePath(path) || RESERVED.has(path)) { findings.push(`unsafe path: ${pyText(path)}`); continue; }
       if (declared.has(path)) { findings.push(`duplicate path: ${path}`); continue; }
       declared.add(path);
-      if (!(path in files)) {
+      if (typeof expected !== 'string' || !SHA256_RE.test(expected)) {
+        findings.push(`files[${index}].sha256 must be sha256:<64 lowercase hex>`);
+        phases.integrity.push({ path, declared: typeof expected === 'string' ? expected : null, actual: null, state: 'invalid' });
+        continue;
+      }
+      if (!hasOwn(files, path)) {
         findings.push(`missing file: ${path}`);
         phases.integrity.push({ path, declared: entry.sha256, actual: null, state: 'missing' });
         continue;
@@ -128,8 +158,13 @@
     for (let i = 0; i < signatures.length; i++) {
       const r = signatures[i];
       const prefix = `signatures[${i}]`;
+      if (!isObject(r)) {
+        findings.push(`${prefix}: must be an object`);
+        phases.signatures.push({ signer: null, role: null, signatureOk: false, hashOk: false, counted: false, trusted: null });
+        continue;
+      }
       const row = { signer: r.signer_id, role: r.role, signatureOk: false, hashOk: false, counted: false, trusted: null };
-      if (!r.signer_id) { findings.push(`${prefix}: signer_id is required`); phases.signatures.push(row); continue; }
+      if (typeof r.signer_id !== 'string' || !r.signer_id) { findings.push(`${prefix}: signer_id is required`); phases.signatures.push(row); continue; }
       if (r.format !== SIGNATURE_FORMAT) { findings.push(`${prefix}: unsupported signature format`); phases.signatures.push(row); continue; }
       row.signatureOk = await verifySignature(r);
       row.hashOk = r.manifest_hash === manifestHash;

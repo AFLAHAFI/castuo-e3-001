@@ -37,10 +37,12 @@ in the demo or the tool: report privately as described in [SECURITY.md](../../SE
 - **Engines.** CI runs Chromium, Firefox and WebKit as shipped by Playwright on
   Linux. WebKit there is not Safari; Safari, Edge and mobile browsers need manual
   checks, recorded by whoever runs them.
-- **Known differences from the CLI.** `verifier.js` does not report
-  `manifest files must be an array` and does not check the `sha256:<64 hex>` form
-  of each entry, which the CLI does. Tracked separately; this demo only serves
-  well-formed example manifests.
+- **Known differences from the CLI.** Two remain, both on unusual manifests:
+  numbers written with a fraction or exponent (`1.0`, `1e5`) are re-serialised
+  differently by JavaScript and Python, so the manifest hash differs; and paths
+  with `.` segments (`a/./b`) are rejected as unsafe by the browser but
+  normalised by the CLI. The browser is stricter in the second case. Every other
+  malformed-content case in `tests/input-conformance.mjs` (23 cases) matches.
 - **Synthetic data.** Results on this page prove the verification logic only.
   They are not an attestation, do not validate CASTÚO-SYSTEM and do not count as
   E3-001 independent review.

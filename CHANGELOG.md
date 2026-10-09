@@ -12,6 +12,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 - Browser demo in `docs/demo/`, published with GitHub Pages: verifies the `v0.1.1` example bundles with WebCrypto (SHA-256, Ed25519) under eight tampering scenarios, and creates and signs new bundles that the CLI verifies. The `pages.yml` workflow takes the bundles and CLI from the release tag and fails if the demo and the CLI disagree.
 
 ### Fixed
+- Browser verifier now matches the v0.1.1 CLI on malformed manifest and signature content (#55): `manifest files must be an array`, per-entry `sha256:<64 lowercase hex>` check, non-object file entries and signatures, non-string `signer_id`, strict base64 for keys and signatures, CLI wording for missing values (`None`), and no prototype-property paths such as `constructor`. Before the fix a `null` signature made the verifier throw. 14 new cases in `tests/input-conformance.mjs`; the 8 scenarios are unchanged. Two known differences remain (see `docs/demo/THREAT-MODEL.md`).
 - Create page: the empty result box was visible before any verification (`.result` display overrode `hidden`).
 
 ## [0.1.1] - 2026-10-09
