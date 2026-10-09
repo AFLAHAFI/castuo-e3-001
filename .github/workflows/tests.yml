@@ -36,3 +36,17 @@ jobs:
             echo "tampered demo bundle was accepted" >&2
             exit 1
           fi
+      - name: e3bundle quickstart (sign, verify, tamper must fail)
+        run: |
+          mkdir -p keys bundle
+          printf 't,value\n0,21.5\n' > bundle/readings.csv
+          python scripts/e3bundle.py keygen --private-key keys/alice.key --signer-id alice
+          python scripts/e3bundle.py manifest bundle --bundle-id ci-smoke
+          python scripts/e3bundle.py sign bundle --private-key keys/alice.key --signer-id alice --role reviewer
+          python -c "import json; k=json.load(open('keys/alice.pub.json')); json.dump({k['signer_id']: k['public_key_b64']}, open('trusted.json','w'))"
+          python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json
+          printf 't,value\n0,99.9\n' > bundle/readings.csv
+          if python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json; then
+            echo "tampered bundle was accepted" >&2
+            exit 1
+          fi
