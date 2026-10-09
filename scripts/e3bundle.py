@@ -80,8 +80,12 @@ def write_json(path: Path, value: Any) -> None:
 def is_safe_relpath(value: Any) -> bool:
     if not isinstance(value, str) or not value or "\\" in value or ":" in value:
         return False
+    # Reject path aliases such as "./file", "a//b" and "a/./b". These can
+    # otherwise name the same filesystem object under different manifest paths.
+    if any(part in ("", ".", "..") for part in value.split("/")):
+        return False
     posix = PurePosixPath(value)
-    return not posix.is_absolute() and ".." not in posix.parts and "." not in posix.parts
+    return posix.as_posix() == value and bool(posix.parts) and not posix.is_absolute() and ".." not in posix.parts
 
 
 def has_symlink(bundle: Path, relpath: str) -> bool:
@@ -299,6 +303,13 @@ def format_text_report(report: dict[str, Any]) -> str:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
+    if args.min_signatures < 0:
+        raise InputError("--min-signatures must be >= 0")
+    if args.output is not None:
+        bundle_root = args.bundle.resolve()
+        output_path = args.output.resolve()
+        if output_path == bundle_root or bundle_root in output_path.parents:
+            raise InputError("--output must be outside the bundle directory; verification must not modify the bundle")
     trusted = None
     if args.trusted_keys is not None:
         trusted = load_json(args.trusted_keys)
