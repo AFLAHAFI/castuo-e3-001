@@ -231,7 +231,7 @@ class E3BundleTests(unittest.TestCase):
 
     def test_extra_symlink_is_rejected_even_when_extra_files_are_allowed(self):
         target = self.root / "extra-target.txt"
-        target.write_text("outside bundle\\n", encoding="utf-8")
+        target.write_text("outside bundle\n", encoding="utf-8")
         link = self.bundle / "extra-link.txt"
         try:
             link.symlink_to(target)
@@ -240,7 +240,10 @@ class E3BundleTests(unittest.TestCase):
         code, report = self.verify("--allow-extra")
         self.assertEqual(code, 1, report)
         self.assertTrue(
-            any("symlinks are not allowed in a bundle: extra-link.txt" in x for x in report["findings"]),
+            any(
+                "symlinks are not allowed in a bundle: extra-link.txt" in x
+                for x in report["findings"]
+            ),
             report["findings"],
         )
 
@@ -279,7 +282,7 @@ class E3BundleTests(unittest.TestCase):
             "data/./readings.csv",
             "report.txt/",
             "./manifest.json",
-            "\\x00bad",
+            "\x00bad",
         )
         manifest_path = self.bundle / "manifest.json"
         for unsafe_path in unsafe_paths:
@@ -301,7 +304,10 @@ class E3BundleTests(unittest.TestCase):
         report = json.loads(proc.stdout)
         self.assertEqual(report["status"], "ERROR")
         self.assertTrue(
-            any("--output must be outside the bundle directory" in x for x in report["findings"]),
+            any(
+                "--output must be outside the bundle directory" in x
+                for x in report["findings"]
+            ),
             report["findings"],
         )
         self.assertFalse(output.exists())
@@ -311,7 +317,6 @@ class E3BundleTests(unittest.TestCase):
             if path.is_file()
         }
         self.assertEqual(before, after)
-
 
 
 if __name__ == "__main__":
