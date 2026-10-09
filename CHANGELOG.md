@@ -6,6 +6,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ### Added
 - Community files: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`, `GOVERNANCE.md` (including the AI-assisted development policy), `CONTRIBUTORS.md` and a feature request form. `CONTRIBUTING.md` reorganised into three contribution levels.
+- Added regression coverage for malformed `signatures.json` (verification failure, exit 1) and a non-UTF-8 manifest (input error, exit 2).
 
 
 ### Security and adoption

@@ -190,6 +190,29 @@ class E3BundleTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertEqual(report["status"], "ERROR")
 
+    def test_corrupt_signatures_json_is_failed_without_crashing(self):
+        self.sign("alice")
+        (self.bundle / "signatures.json").write_text('[{"signer_id":', encoding="utf-8")
+        proc = run("verify", self.bundle, "--min-signatures", 1)
+        self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "FAILED")
+        self.assertTrue(
+            any("cannot read signatures.json" in finding for finding in report["findings"]),
+            report["findings"],
+        )
+
+    def test_non_utf8_manifest_is_an_input_error(self):
+        (self.bundle / "manifest.json").write_bytes(b'{"format":"e3.bundle.v1","files":\xff}')
+        proc = run("verify", self.bundle)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertTrue(
+            any("cannot read manifest.json" in finding for finding in report["findings"]),
+            report["findings"],
+        )
+
     def test_private_key_is_not_written_into_bundle(self):
         self.sign("alice")
         names = {path.name for path in self.bundle.rglob("*")}
