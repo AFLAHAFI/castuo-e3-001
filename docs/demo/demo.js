@@ -9,6 +9,30 @@
     ['original', 'Original'], ['tampered', 'Cambiar una temperatura'], ['extra', 'Añadir un fichero'], ['missing', 'Borrar report.md'],
     ['forged', 'Falsificar una firma'], ['manifest', 'Editar el manifiesto'], ['nopin', 'Sin claves fijadas'], ['untrusted', 'Una clave sin fijar'],
   ];
+  const HELP = {
+    original: 'Original: el paquete firmado en v0.1.1, sin cambios. Debe verificarse correctamente.',
+    tampered: 'Cambiar una temperatura: un valor de data/readings.csv cambia después de firmar. El hash del fichero deja de coincidir.',
+    extra: 'Añadir un fichero: aparece notes.txt, que el manifiesto firmado no declara.',
+    missing: 'Borrar report.md: falta un fichero que el manifiesto firmado sí declara.',
+    forged: 'Falsificar una firma: se cambia el rol dentro de una firma. La firma deja de ser válida.',
+    manifest: 'Editar el manifiesto: cambia el bundle_id. Cambia la huella canónica y las dos firmas dejan de cubrirlo.',
+    nopin: 'Sin claves fijadas: las firmas pueden ser válidas, pero no sabes quién firmó. La confianza queda sin comprobar.',
+    untrusted: 'Una clave sin fijar: solo fijas la clave de example-runner. La firma del revisor es válida pero no cuenta y no se alcanza el umbral de 2.',
+  };
+  const EDITED_HELP = 'Has editado data/readings.csv a mano: se verifica tu versión contra el manifiesto firmado original.';
+
+  function meaningOf(finding) {
+    let m;
+    if ((m = finding.match(/^hash mismatch: (.+)$/))) return `${m[1]} ha cambiado: su contenido actual no coincide con el declarado en el manifiesto firmado.`;
+    if ((m = finding.match(/^missing file: (.+)$/))) return `${m[1]} está declarado en el manifiesto firmado, pero no está en el paquete.`;
+    if ((m = finding.match(/^undeclared file: (.+)$/))) return `${m[1]} está en el paquete, pero el manifiesto firmado no lo declara: se añadió después de firmar.`;
+    if (/invalid Ed25519 signature$/.test(finding)) return 'Una firma no corresponde a los datos firmados: se modificó o no la hizo esa clave.';
+    if (/signed manifest_hash does not match/.test(finding)) return 'Una firma es válida, pero cubre otra versión del manifiesto, no esta.';
+    if ((m = finding.match(/key for (.+) is not in the trusted key set$/))) return `La firma de ${m[1]} es válida, pero su clave no está entre las que fijaste: no cuenta como confiable.`;
+    if ((m = finding.match(/^signature threshold not met: (\d+) < (\d+)$/))) return `Solo ${m[1]} firma(s) cuentan y la política exige ${m[2]} (--min-signatures).`;
+    return 'El paquete no cumple una de las comprobaciones; consulta el informe JSON.';
+  }
+
   const data = { manifest: null, signatures: null, trusted: null, files: {}, tamperedCsv: null };
   let scenario = 'original';
   let edited = false;
@@ -64,10 +88,35 @@
 
     $('status').textContent = rep.status; $('status').className = 'status ' + rep.status;
     $('exit').textContent = 'exit ' + r.exitCode;
-    $('timing').textContent = `Calculado en tu navegador en ${ms} ms · ${rep.files_verified}/${rep.files_declared} ficheros · ${rep.signatures_valid} firmas válidas`;
+    $('timing').textContent = `Calculado en tu navegador en ${ms} ms.`;
     const f = $('findings'); f.replaceChildren();
-    if (!rep.findings.length) f.append(el('li', { class: 'none' }, 'Sin hallazgos: ficheros sin cambios, nada sin declarar, umbral de firmas cumplido.'));
+    if (!rep.findings.length) f.append(el('li', { class: 'none' }, 'Ninguno.'));
     for (const x of rep.findings) f.append(el('li', { class: 'bad' }, '- ' + x));
+
+    const sum = $('summary'); sum.replaceChildren();
+    sum.append(el('li', { class: rep.files_verified === rep.files_declared ? 'ok' : 'bad' }, `${rep.files_verified}/${rep.files_declared} ficheros declarados íntegros`));
+    const undeclared = rep.findings.filter((x) => x.startsWith('undeclared file')).length;
+    if (undeclared) sum.append(el('li', { class: 'bad' }, `${undeclared} fichero(s) sin declarar en el manifiesto`));
+    sum.append(el('li', { class: rep.signatures_valid === rep.signatures_present ? 'ok' : 'bad' }, `${rep.signatures_valid}/${rep.signatures_present} firmas válidas`));
+    if (rep.trust_mode === 'pinned') sum.append(el('li', { class: rep.signatures_trusted === rep.signatures_present ? 'ok' : 'bad' }, `${rep.signatures_trusted}/${rep.signatures_present} firmas con claves fijadas`));
+    else sum.append(el('li', { class: 'warn' }, 'sin claves fijadas: confianza no comprobada'));
+    const counted = rep.trust_mode === 'pinned' ? rep.signatures_trusted : rep.signatures_valid;
+    sum.append(el('li', { class: counted >= rep.min_signatures ? 'ok' : 'bad' }, `umbral ${counted >= rep.min_signatures ? 'cumplido' : 'no cumplido'}: mínimo ${rep.min_signatures} firmas`));
+
+    const mean = $('meaning'); mean.replaceChildren();
+    const next = $('next'); next.replaceChildren();
+    if (rep.status === 'VERIFIED' && rep.trust_mode === 'pinned') {
+      mean.append(el('li', {}, 'Los ficheros coinciden con el manifiesto firmado y las firmas de las claves que fijaste alcanzan el umbral. No dice que el contenido sea verdadero.'));
+      next.append(document.createTextNode('Ejecuta la misma verificación en tu terminal con e3bundle v0.1.1 y compara: '));
+      next.append(el('a', { href: '#local' }, 'pruébalo en tu equipo'), document.createTextNode('.'));
+    } else if (rep.status === 'VERIFIED') {
+      mean.append(el('li', {}, 'Los ficheros están íntegros y hay firmas válidas suficientes, pero sin claves fijadas no sabes quién firmó: cualquiera puede generar una clave y firmar.'));
+      next.append(document.createTextNode('Fija las claves públicas que esperas con --trusted-keys antes de confiar en este resultado.'));
+    } else {
+      for (const text of new Set(rep.findings.map(meaningOf))) mean.append(el('li', {}, text));
+      next.append(document.createTextNode('Revisa el fichero, el manifiesto o el origen del paquete. No trates esta evidencia como íntegra.'));
+    }
+    $('scenarioHelp').textContent = edited ? EDITED_HELP : HELP[scenario];
     $('provCli').textContent = cliCommand(inp.trusted);
     $('cli').textContent = cliCommand(inp.trusted) + ' --format text';
     $('provBundle').textContent = edited || scenario !== 'original' ? 'examples/bundles/valid @ v0.1.1, modificado en esta página' : 'examples/bundles/valid @ v0.1.1';
@@ -136,7 +185,7 @@
     if (!(await E3.ed25519Supported())) $('unsupported').hidden = false;
     try { await load(); } catch (e) { $('loadError').hidden = false; return; }
     $('csv').value = dec.decode(data.files['data/readings.csv']);
-    $('csv').addEventListener('input', () => { edited = true; renderScenarios(); $('csvNote').textContent = 'Has editado el fichero. Pulsa «Verificar ahora».'; });
+    $('csv').addEventListener('input', () => { edited = true; renderScenarios(); $('scenarioHelp').textContent = EDITED_HELP; $('csvNote').textContent = 'Has editado el fichero. Pulsa «Verificar ahora».'; });
     $('run').addEventListener('click', run);
     $('copy').addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(JSON.stringify(lastReport, Object.keys(lastReport).sort(), 2)); $('copy').textContent = 'Copiado'; }

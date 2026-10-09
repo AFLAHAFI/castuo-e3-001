@@ -35,7 +35,9 @@ The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519
 No Python needed. Release images for `linux/amd64` and `linux/arm64` are published to GitHub Container Registry by the `container.yml` workflow, built from the release tag with an SBOM and build provenance:
 
 ```bash
-docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.1   verify examples/bundles/valid --min-signatures 2   --trusted-keys examples/bundles/trusted-keys.json --format text
+docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.1 \
+  verify examples/bundles/valid --min-signatures 2 \
+  --trusted-keys examples/bundles/trusted-keys.json --format text
 ```
 
 The image runs as a non-root user with `/data` as its working directory and makes no network calls. For repeatable runs, pin the digest shown on the release page instead of the tag, and check where it was built:

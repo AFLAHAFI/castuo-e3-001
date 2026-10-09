@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>e3bundle · Verifica un paquete en tu navegador</title>
-<meta name="description" content="Demo ejecutable de e3bundle: verificación SHA-256 y Ed25519 en el navegador sobre los paquetes de ejemplo de la release v0.1.1.">
+<title>e3bundle · Evidencia verificable para datos de campo</title>
+<meta name="description" content="Demo ejecutable de e3bundle: comprueba en tu navegador, con SHA-256 y Ed25519, que un paquete de evidencias no ha sido alterado. Datos sintéticos de la release v0.1.1.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,23 +19,59 @@
   </div></header>
   <section class="hero"><div class="wrap">
     <div class="text">
-      <p class="eyebrow">e3bundle v0.1.1 · demo ejecutable · fase 1 de 2</p>
-      <h1>Verifica un paquete de evidencias aquí mismo, sin instalar nada.</h1>
-      <p class="lede">Tu navegador calcula los SHA-256 y comprueba las firmas Ed25519 de los paquetes de ejemplo publicados en la release v0.1.1. Cambia un dato, añade o borra un fichero, falsifica una firma: verás lo mismo que diría la herramienta de terminal.</p>
-      <p class="small-dark">En cada cambio, la integración continua compara esta página con el CLI de v0.1.1 en ocho escenarios.</p>
+      <p class="eyebrow">Demo ejecutable · e3bundle v0.1.1 · fase 1 de 2</p>
+      <h1>Evidencia verificable para datos de campo.</h1>
+      <p class="lede">Verifica que un paquete de evidencias no ha sido alterado, sin subirlo a ningún servidor.</p>
+      <p class="value">Cuando un dato de campo se modifica, se pierde o una firma se falsifica, e3bundle lo detecta y explica por qué.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#probar">1 · Verificar la demo</a>
+        <a class="btn secondary" href="crear.html">2 · Crear y firmar</a>
+        <a class="btn ghost" href="https://github.com/Traky12/castuo-e3-001">GitHub</a>
+      </div>
+      <p class="small-dark">Demo con datos sintéticos. Comprueba la verificación técnica; no valida CASTÚO-SYSTEM, no certifica un proceso ni confirma datos reales.</p>
     </div>
     <img src="assets/logo.jpg" alt="Logotipo oficial de CASTÚO-SYSTEM" width="190" height="190">
   </div></section>
 </div>
 
 <main class="wrap">
-  <div class="notice" role="note"><strong>Esta demo ejecuta la verificación localmente en tu navegador.</strong> Los datos son sintéticos. Una verificación correcta no certifica que el contenido sea verdadero ni autoriza su uso en producción.</div>
+  <div class="notice" role="note"><strong>Dónde ocurre el cálculo.</strong> La página y los paquetes de ejemplo se descargan de GitHub Pages; los hashes SHA-256 y las firmas Ed25519 se calculan en tu navegador con WebCrypto. Lo que edites aquí no se envía a ningún servidor.</div>
   <div class="alert" id="unsupported" hidden>Tu navegador no admite verificación Ed25519 en WebCrypto. La integridad SHA-256 se comprueba igual, pero las firmas no. Puedes verificar el paquete con el CLI: <code>e3bundle verify examples/bundles/valid --min-signatures 2 --trusted-keys examples/bundles/trusted-keys.json</code></div>
   <div class="alert" id="loadError" hidden>No se pudieron cargar los paquetes de ejemplo. Recarga la página.</div>
 
-  <section class="card" aria-labelledby="sc-title">
-    <div class="row"><h2 id="sc-title">Elige qué le pasa al paquete</h2><p class="hint">Cada escenario se verifica al instante.</p></div>
+  <div class="grid2">
+    <section class="card" aria-labelledby="problem-title">
+      <p class="kicker">El problema</p>
+      <h2 id="problem-title">Una evidencia pierde valor si no se puede demostrar que no ha cambiado.</h2>
+      <p class="body-2">En agricultura, energía o auditoría, un informe puede editarse, un fichero puede desaparecer, una firma puede sustituirse o un manifiesto puede alterarse. e3bundle crea un paquete verificable:</p>
+      <ul class="ticks">
+        <li>calcula una huella SHA-256 por fichero;</li>
+        <li>genera un manifiesto canónico;</li>
+        <li>permite firmar ese manifiesto con Ed25519;</li>
+        <li>comprueba integridad, firmas y claves fijadas;</li>
+        <li>devuelve un informe claro y reproducible.</li>
+      </ul>
+    </section>
+    <section class="card" aria-labelledby="how-title">
+      <p class="kicker">Cómo funciona</p>
+      <h2 id="how-title">Seis pasos, del fichero al informe.</h2>
+      <ol class="steps">
+        <li>Empaquetas ficheros y metadatos en un paquete.</li>
+        <li>e3bundle calcula el SHA-256 de cada fichero.</li>
+        <li>Construye un manifiesto canónico.</li>
+        <li>Los firmantes firman la huella del manifiesto.</li>
+        <li>Cualquier persona puede verificarlo después.</li>
+        <li>Si algo cambia, el resultado muestra el hallazgo concreto.</li>
+      </ol>
+      <p class="flow" aria-label="Ficheros, SHA-256, manifiesto, firmas Ed25519, verificación"><span>Ficheros</span><span>SHA-256</span><span>Manifiesto</span><span>Firmas Ed25519</span><span>Verificación</span></p>
+    </section>
+  </div>
+
+  <section class="card" id="probar" aria-labelledby="sc-title">
+    <p class="kicker">Pruébalo aquí</p>
+    <div class="row"><h2 id="sc-title">Elige una alteración o condición de confianza</h2><p class="hint">Cada escenario se verifica al instante en tu navegador.</p></div>
     <div class="chips" role="group" aria-label="Escenarios" id="scenarios"></div>
+    <p class="scenario-help" id="scenarioHelp" aria-live="polite"></p>
     <div class="grid2">
       <div class="field">
         <label for="csv">data/readings.csv — edítalo como quieras</label>
@@ -51,12 +87,20 @@
   </section>
 
   <section class="result" aria-live="polite" aria-labelledby="res-title">
-    <div style="display:flex;flex-direction:column;gap:8px;flex:1 1 300px;min-width:0">
+    <div class="result-main">
       <p class="eyebrow">Resultado</p>
       <h2 id="res-title" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="status" id="status">…</span><span class="exit" id="exit">exit —</span></h2>
+      <ul class="summary" id="summary"></ul>
       <p class="small-dark" id="timing">Calculando…</p>
     </div>
-    <ul class="findings" id="findings"></ul>
+    <div class="result-explain">
+      <p class="eyebrow">Hallazgos</p>
+      <ul class="findings" id="findings"></ul>
+      <p class="eyebrow">Qué significa</p>
+      <ul class="meaning" id="meaning"></ul>
+      <p class="eyebrow">Próximo paso</p>
+      <p class="next" id="next"></p>
+    </div>
     <dl class="provenance">
       <dt>herramienta</dt><dd>e3bundle v0.1.1 (lógica equivalente, comprobada en CI)</dd>
       <dt>paquete</dt><dd id="provBundle">examples/bundles/valid @ v0.1.1</dd>
@@ -77,7 +121,7 @@
 
   <article class="card">
     <div class="phase-head"><h3><span class="num">02</span>Huella del manifiesto canónico</h3><span class="pill" id="p2">pendiente</span></div>
-    <p class="hint" style="font-size:15px;color:var(--ink-2)">Las firmas se hacen sobre esta forma canónica del manifiesto (claves ordenadas, sin espacios). Si el manifiesto cambia en cualquier detalle, cambia la huella y las firmas dejan de servir.</p>
+    <p class="body-2">Las firmas se hacen sobre esta forma canónica del manifiesto (claves ordenadas, sin espacios). Si el manifiesto cambia en cualquier detalle, cambia la huella y las firmas dejan de servir.</p>
     <pre class="canon" id="canon"></pre>
     <p class="mono" style="margin:0;font-size:13px">calculada: <span id="mhash"></span></p>
   </article>
@@ -89,7 +133,7 @@
 
   <article class="card">
     <div class="phase-head"><h3><span class="num">04</span>Confianza en las claves</h3><span class="pill" id="p4">pendiente</span></div>
-    <p class="hint" style="font-size:15px;color:var(--ink-2)" id="trustExplain"></p>
+    <p class="body-2" id="trustExplain"></p>
     <ul id="trust" style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px"></ul>
   </article>
 
@@ -98,8 +142,98 @@
     <pre class="terminal" id="report"></pre>
   </article>
 
-  <section class="card" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between">
-    <p style="margin:0;flex:1 1 480px;color:var(--ink-2)"><strong>Lo que un VERIFIED no significa:</strong> que el contenido sea verdadero; quién firmó sin claves fijadas; que los firmantes sean independientes; cuándo se firmó; que las claves no estén comprometidas. No es una certificación.</p>
+  <section class="card" aria-labelledby="checks-title">
+    <p class="kicker">Qué comprueba</p>
+    <h2 id="checks-title">Cada fase, y qué pasa si falla</h2>
+    <div class="table-box"><table>
+      <thead><tr><th scope="col">Fase</th><th scope="col">Qué comprueba</th><th scope="col">Si falla</th></tr></thead>
+      <tbody>
+        <tr><td>Integridad</td><td>SHA-256 de cada fichero</td><td>El fichero cambió, falta o no está declarado.</td></tr>
+        <tr><td>Manifiesto canónico</td><td>Huella estable del manifiesto</td><td>Cualquier cambio rompe la base de las firmas.</td></tr>
+        <tr><td>Firmas Ed25519</td><td>Validez criptográfica de cada firma</td><td>La firma no corresponde al manifiesto.</td></tr>
+        <tr><td>Confianza en claves</td><td>Claves públicas fijadas por quien verifica</td><td>Una firma válida no se considera confiable.</td></tr>
+        <tr><td>Umbral</td><td>Número mínimo de firmas confiables</td><td>No se cumple la política de confianza.</td></tr>
+        <tr><td>Informe JSON</td><td>Resultado reproducible y legible</td><td>Permite auditar el fallo o exportarlo.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card" aria-labelledby="verified-title">
+    <p class="kicker">Límites</p>
+    <h2 id="verified-title">Qué significa VERIFIED</h2>
+    <p class="body-2">VERIFIED significa que, con las claves fijadas y los parámetros indicados:</p>
+    <div class="grid2">
+      <ul class="ticks">
+        <li>los ficheros declarados coinciden con sus hashes;</li>
+        <li>no hay ficheros sin declarar;</li>
+        <li>las firmas son criptográficamente válidas;</li>
+        <li>se alcanza el umbral mínimo de firmas confiables.</li>
+      </ul>
+      <div>
+        <p class="body-2" style="margin-top:0"><strong>No significa</strong> que:</p>
+        <ul class="crosses">
+          <li>el contenido sea verdadero;</li>
+          <li>los firmantes sean independientes u honestos;</li>
+          <li>las claves no estén comprometidas;</li>
+          <li>el paquete se firmara en una fecha determinada;</li>
+          <li>el proceso de campo fuera correcto;</li>
+          <li>CASTÚO-SYSTEM esté certificado o validado comercialmente.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="card" id="local" aria-labelledby="local-title">
+      <p class="kicker">Pruébalo en tu equipo</p>
+      <h2 id="local-title">El mismo resultado, en tu terminal</h2>
+      <ol class="steps">
+        <li>Clona <a href="https://github.com/Traky12/castuo-e3-001">castuo-e3-001</a>.</li>
+        <li>Instala e3bundle v0.1.1.</li>
+        <li>Verifica el paquete de ejemplo.</li>
+        <li>Compara el resultado con esta demo.</li>
+        <li>Si hay una discrepancia, <a href="https://github.com/Traky12/castuo-e3-001/issues/new?template=reproduction_report.yml">abre un informe de reproducción</a>.</li>
+      </ol>
+      <pre class="terminal">git clone https://github.com/Traky12/castuo-e3-001
+cd castuo-e3-001
+python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.1"
+e3bundle verify examples/bundles/valid \
+  --min-signatures 2 \
+  --trusted-keys examples/bundles/trusted-keys.json \
+  --format text</pre>
+    </section>
+    <section class="card" aria-labelledby="contrib-title">
+      <p class="kicker">Contribuye</p>
+      <h2 id="contrib-title">Buscamos pruebas, revisiones y casos de uso</h2>
+      <p class="body-2">Pruebas de instalación, revisiones del protocolo, mejoras de documentación y casos de uso reales.</p>
+      <ul class="ticks">
+        <li><a href="https://github.com/Traky12/castuo-e3-001/issues/new?template=reproduction_report.yml">Reproduce la demo y comparte tu entorno</a>.</li>
+        <li><a href="https://github.com/Traky12/castuo-e3-001/blob/main/PROTOCOL.md">Revisa el protocolo E3-001</a>.</li>
+        <li><a href="https://github.com/Traky12/castuo-e3-001/issues/new?template=feature_request.yml">Propón un caso de uso</a>.</li>
+        <li><a href="https://github.com/Traky12/castuo-e3-001/blob/main/CONTRIBUTING.md">Lee la guía de contribución</a>.</li>
+      </ul>
+      <p class="body-2"><strong>Vulnerabilidades:</strong> nunca en una issue pública. Repórtalas en privado desde <a href="https://github.com/Traky12/castuo-e3-001/security/advisories/new">Security → Report a vulnerability</a>, con descripción, pasos para reproducir, versión, impacto y, si la tienes, una prueba de concepto. Ver <a href="https://github.com/Traky12/castuo-e3-001/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="trace-title">
+    <p class="kicker">Trazabilidad de esta demo</p>
+    <h2 id="trace-title">De dónde sale cada dato</h2>
+    <dl class="trace">
+      <dt>Producto</dt><dd>e3bundle</dd>
+      <dt>Versión</dt><dd><a href="https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1">v0.1.1</a></dd>
+      <dt>Commit</dt><dd><a class="mono" href="https://github.com/Traky12/castuo-e3-001/commit/38e3c20ee2f37e957f81ba6e1ead6d90bc8a0c9a">38e3c20e</a></dd>
+      <dt>Paquete</dt><dd><a class="mono" href="https://github.com/Traky12/castuo-e3-001/tree/v0.1.1/examples/bundles">examples/bundles/valid</a></dd>
+      <dt>Datos</dt><dd>sintéticos, firmantes <span class="mono">example-*</span></dd>
+      <dt>Verificación</dt><dd>local, con WebCrypto</dd>
+      <dt>Contraste</dt><dd>CLI de Python v0.1.1, 8 escenarios más la interoperabilidad de paquetes creados aquí; comparado en CI en cada cambio de la demo (<a href="https://github.com/Traky12/castuo-e3-001/blob/main/docs/demo/tests/conformance.mjs">conformance.mjs</a>), primera comparación el 2026-10-09</dd>
+      <dt>Resultado</dt><dd>idéntico en la demo y en el CLI</dd>
+      <dt>Código</dt><dd><a href="https://github.com/Traky12/castuo-e3-001/tree/main/docs/demo">docs/demo</a></dd>
+    </dl>
+  </section>
+
+  <section class="card closing">
+    <p class="closing-text">La demo demuestra que la verificación funciona. El siguiente paso es demostrar que funciona en un caso real, con datos autorizados, personas independientes y criterios definidos.</p>
     <a class="btn brass" href="crear.html">Fase 2: crea y firma el tuyo</a>
   </section>
 </main>
