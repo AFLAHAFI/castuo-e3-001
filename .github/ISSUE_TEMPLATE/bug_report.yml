@@ -1,0 +1,29 @@
+name: Bug report
+description: Something in e3bundle or the validators behaves incorrectly
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Exact commands to reproduce
+      description: Use synthetic data only. Never paste private keys.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: JSON report or error output
+      render: json
+  - type: input
+    id: env
+    attributes:
+      label: OS, Python version and repository commit
+    validations:
+      required: true
