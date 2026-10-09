@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "e3bundle"
-version = "0.1.0"
+version = "0.1.1"
 description = "Create, sign and verify portable evidence bundles offline with SHA-256 manifests and Ed25519 signatures."
 readme = "README.md"
 requires-python = ">=3.11"

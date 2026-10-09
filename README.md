@@ -18,13 +18,15 @@ Test reports, datasets, audit exports and lab results are often shared as plain 
 ## Install
 
 ```bash
-python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.0"
+python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.1"
 e3bundle --help
 ```
 
-Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.0](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
+Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.1](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
 
 ## 30-second demo
+
+![Terminal: the valid bundle verifies with exit code 0; the tampered bundle fails with hash mismatch: data/readings.csv and exit code 1](docs/assets/demo.svg)
 
 The repository ships two signed example bundles: [`valid`](examples/bundles/valid) and [`tampered`](examples/bundles/tampered), which differs by one temperature value in `data/readings.csv`.
 
@@ -42,11 +44,12 @@ $ echo $?
 
 Both commands run in CI on every change, so this output is checked, not illustrative.
 
-For a human-readable summary, use `--format text` (available from the current
-source checkout; not included in v0.1.0):
+For a human-readable summary, add `--format text`:
 
 ```console
-$ python scripts/e3bundle.py verify examples/bundles/tampered --min-signatures 2 --trusted-keys examples/bundles/trusted-keys.json --format text
+$ e3bundle verify examples/bundles/valid --min-signatures 2 --trusted-keys examples/bundles/trusted-keys.json --format text
+VERIFIED  example-001  files 2/2  signatures 2 trusted / 2 valid
+$ e3bundle verify examples/bundles/tampered --min-signatures 2 --trusted-keys examples/bundles/trusted-keys.json --format text
 FAILED  example-001  files 1/2  signatures 2 trusted / 2 valid
   - hash mismatch: data/readings.csv
 ```
@@ -80,12 +83,14 @@ What `verify` detects: modified, missing and undeclared files; path traversal an
 ## Use it in GitHub Actions
 
 ```yaml
-- uses: Traky12/castuo-e3-001@<full-commit-sha>   # pin to a commit SHA
+- uses: Traky12/castuo-e3-001@v0.1.1   # safer: the full commit SHA of the release
   with:
     bundle: evidence/release-42
     min-signatures: "2"
     trusted-keys: .github/trusted-keys.json
 ```
+
+For supply-chain safety, pin the full commit SHA that the [releases page](https://github.com/Traky12/castuo-e3-001/releases) shows for the tag instead of the tag itself.
 
 The step writes the JSON report (`report-path`, default `e3bundle-report.json`), adds the findings to the job summary and fails when verification does not pass. Set `fail-on-error: "false"` to keep the job going and branch on the `status` output (`VERIFIED`, `FAILED` or `ERROR`) instead; GitHub does not expose outputs of a failed step.
 
@@ -108,7 +113,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). The
 
 ## Roadmap (proposed, not committed)
 
-- PyPI package.
+- PyPI package (`pip install e3bundle`) once the `e3.bundle.v1` format is stable enough.
 - Detached signature export and key rotation guidance.
 - Optional RFC 3161 timestamping.
 
@@ -120,78 +125,13 @@ Start in 10 minutes, improve the project in an hour, or become an independent E3
 
 ---
 
-## E3-001: the CASTÚO external verification protocol
+## E3-001 protocol
 
-This repository is also the public protocol for independently replaying and reviewing the CASTÚO S-001A vertical slice. The procedure and acceptance criteria are in [PROTOCOL.md](PROTOCOL.md). It is not a production certification, commercial proof, maturity claim or authorization service.
+`e3bundle` is also the public tooling of the CASTÚO-SYSTEM E3-001 public protocol for controlled independent reproduction. Controlled-review material may be provided under defined review conditions; the private core stays outside the public scope, and a successful reproduction does not validate, certify or promote it. Castuo-system remains the private canonical authority for current technical state and promotion decisions.
 
-> **A local candidate never counts as independent verification.**
+**Current state:** external replay pending · signed review 0/2 · promotion `BLOCKED`. The replay harness is not published here, so a clean clone reproduces the verifiers and example bundles, not the complete S-001A replay.
 
-**Current state** (detail in [STATUS.md](STATUS.md)): external replay pending · signed human review pending (0/2) · G2 review required · staging handoff blocked · promotion `BLOCKED`.
-
-### Authority and Promotion Boundary
-
-E3-001 is a bounded public protocol for controlled independent reproduction.
-
-A successful reproduction may provide evidence within the declared scope. It does not independently validate, certify or promote the private core.
-
-Castuo-system remains the private canonical authority for current technical state and promotion decisions.
-
-castuo-evolution may contain historical or prepared governance material, but it is not a promotion authority, synchronized source of truth or validation gate for E3-001.
-
-The public protocol is intended to contain enough information to reproduce the declared bounded claim without exposing non-public implementation, credentials, sensitive IP or private operational material. Controlled-review material may be provided under defined review conditions where appropriate.
-
-### Verification sequence
-
-```text
-freeze package → independent runner executes replay → runner attestation signs result hash
-→ two independent humans sign review entries → external bundle validator passes
-→ G2 evaluator passes → evidence handed to Castuo-system for a staging-rls and promotion decision
-```
-
-The first unmet predicate stops the sequence. `oneA` remains false and `promotion` remains `BLOCKED` throughout. A passing G2 evaluation is evidence within the declared scope, not a promotion decision.
-
-```bash
-python scripts/validate_external_evidence_bundle.py <bundle> --min-reviewers 2 --output external-evidence-validation.json
-python scripts/evaluate_g2.py external-evidence-validation.json --output g2-decision.json
-```
-
-The S-001A validator requires a frozen manifest, fixture, replay result, evidence envelope, runner attestation and signed reviewer quorum.
-
-### Try the S-001A validator (synthetic demo)
-
-```bash
-python -m pip install -r requirements.txt
-python examples/make_demo_bundle.py demo/ok
-python scripts/validate_external_evidence_bundle.py demo/ok --output demo/ok-validation.json        # exit 0
-python examples/make_demo_bundle.py demo/bad --tamper result
-python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-validation.json      # exit 1
-```
-
-`--tamper` modes: `result`, `fixture`, `attestation-signature`, `reviewer-signature`, `reviewer-quorum`, `reviewer-duplicate`, `local-runner`, `production-claim`, `missing-envelope`.
-
-> **The demo bundle is not evidence.** Its keys are generated in memory and discarded, its runner and reviewers are fictional `DEMO-*` identities, and it contains no S-001A replay. The validator reports `DEMO_VALIDATED`, sets `g2_eligible: false`, and the G2 evaluator must return `BLOCKED`. A passing demo shows only that structural checks work; it says nothing about the independence or identity of a runner or reviewer, the truth of a claim, or CASTÚO-SYSTEM.
-
-### Architectural identity
-
-- **Architectural name:** `castuo-replay-protocol` · **Role:** controlled external replay and independent-review protocol · **Status:** `PENDING`
-- **Boundary:** reproduction protocol within declared scope; not a certification, promotion or runtime authority.
-- **Quality profile:** [`.castuo/repository-profile.yaml`](.castuo/repository-profile.yaml)
-- **Chain of custody:** `castuo-evidence` (frozen fixture and replay artifacts) → this repository (public protocol, validators, read-only G2 evaluator) → `Castuo-system` *(private; canonical authority for implementation, staging-rls and promotion)*.
-
-### Repository contents
-
-| Path | Purpose |
-|---|---|
-| `scripts/e3bundle.py` · `action.yml` · `pyproject.toml` | Generic bundle tool, GitHub Action and packaging |
-| `examples/` | Signed example bundles and the S-001A demo generator |
-| `PROTOCOL.md` · `STATUS.md` | S-001A procedure, acceptance criteria and current public state |
-| `schemas/` · `templates/` | Portable manifest contract and redacted templates (no keys or secrets) |
-| `scripts/validate_external_evidence_bundle.py` · `scripts/evaluate_g2.py` | S-001A validator and read-only G2 evaluator |
-
-### Related surfaces and history
-
-- [Public profile and claim boundary](https://github.com/Traky12/Traky12) · `Castuo-system` *(private)*: canonical technical authority · `castuo-evolution` *(private)*: evolution and governance workspace, not an authority.
-- Historical records for their declared snapshot date only, not current state: [ecosystem integration record of 2026-08-22](docs/CASTUO_ECOSYSTEM_INTEGRATION_2026-08-22.md) and [deep audit of 2026-08-22](docs/CASTUO_DEEP_AUDIT_2026-08-22.md). They do not claim production readiness, certification, field validation or independent review.
+Full protocol, authority boundary, synthetic S-001A demo and history: [docs/E3-001.md](docs/E3-001.md) · [PROTOCOL.md](PROTOCOL.md) · [STATUS.md](STATUS.md).
 
 ## License
 
