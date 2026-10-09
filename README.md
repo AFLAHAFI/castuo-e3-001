@@ -114,6 +114,10 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). The
 
 Changes are recorded in [CHANGELOG.md](CHANGELOG.md). Contributions, bug reports and *reproduction reports* are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). The [public adoption roadmap](docs/PUBLIC_ADOPTION_PLAN.md) records tester-first milestones and community work.
 
+## Community
+
+Start in 10 minutes, improve the project in an hour, or become an independent E3-001 reviewer: see the contribution levels in [CONTRIBUTING.md](CONTRIBUTING.md). Questions: [SUPPORT.md](SUPPORT.md). Decisions and AI-assisted development: [GOVERNANCE.md](GOVERNANCE.md). Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Thanks to everyone in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
 ---
 
 ## E3-001: the CASTÚO external verification protocol

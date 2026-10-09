@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
+### Added
+- Community files: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`, `GOVERNANCE.md` (including the AI-assisted development policy), `CONTRIBUTORS.md` and a feature request form. `CONTRIBUTING.md` reorganised into three contribution levels.
+
+
 ### Security and adoption
 - Synthetic S-001A demonstration bundles are explicitly labelled `DEMO_VALIDATED` and blocked from G2/staging eligibility; they cannot stand in for external replay or independent human review.
 - Added the public adoption roadmap and measurable tester-first milestones.

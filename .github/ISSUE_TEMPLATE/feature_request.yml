@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose an improvement to e3bundle, the Action or the documentation
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation, not only the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Behaviour, CLI flags or format changes you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: How would we know it works?
+      description: Expected output, exit codes or tests.
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Claim boundary
+      options:
+        - label: This proposal does not require claiming certification, production readiness or independent validation.
+          required: true
