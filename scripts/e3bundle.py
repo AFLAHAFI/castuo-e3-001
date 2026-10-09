@@ -110,12 +110,16 @@ def has_symlink(bundle: Path, relpath: str) -> bool:
 
 def bundle_files(bundle: Path) -> list[str]:
     found = []
+    if bundle.is_symlink():
+        raise InputError("bundle directory must not be a symlink")
+    if not bundle.is_dir():
+        raise InputError(f"bundle directory not found: {bundle}")
     for path in sorted(bundle.rglob("*")):
         relpath = path.relative_to(bundle).as_posix()
-        if relpath in RESERVED:
-            continue
         if path.is_symlink():
             raise InputError(f"symlinks are not allowed in a bundle: {relpath}")
+        if relpath in RESERVED:
+            continue
         if path.is_file():
             found.append(relpath)
     return found
@@ -197,6 +201,15 @@ def cmd_sign(args: argparse.Namespace) -> int:
 
 
 def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, allow_extra: bool) -> dict[str, Any]:
+    # Do not follow a symlinked bundle root or reserved metadata files before
+    # scanning. The manifest/signatures are trust-boundary inputs themselves.
+    if bundle.is_symlink():
+        raise InputError("bundle directory must not be a symlink")
+    if not bundle.is_dir():
+        raise InputError(f"bundle directory not found: {bundle}")
+    for reserved_name in RESERVED:
+        if (bundle / reserved_name).is_symlink():
+            raise InputError(f"symlinks are not allowed in a bundle: {reserved_name}")
     manifest = load_json(bundle / MANIFEST)
     if not isinstance(manifest, dict):
         raise InputError(f"{MANIFEST} must be a JSON object")
