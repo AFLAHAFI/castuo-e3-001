@@ -236,5 +236,63 @@ class E3BundleTests(unittest.TestCase):
         self.assertIn("would invalidate", proc.stderr)
 
 
+    def test_negative_min_signatures_is_an_input_error(self):
+        for output_format in ("json", "text"):
+            with self.subTest(output_format=output_format):
+                proc = run(
+                    "verify", self.bundle, "--min-signatures", -1,
+                    "--format", output_format,
+                )
+                self.assertEqual(proc.returncode, 2)
+                self.assertEqual(proc.stderr, "")
+                if output_format == "json":
+                    report = json.loads(proc.stdout)
+                    self.assertEqual(report["status"], "ERROR")
+                    self.assertTrue(any("--min-signatures must be >= 0" in x for x in report["findings"]))
+                else:
+                    self.assertEqual(
+                        proc.stdout,
+                        "ERROR\\n  - --min-signatures must be >= 0\\n",
+                    )
+
+    def test_noncanonical_manifest_paths_are_rejected(self):
+        unsafe_paths = (
+            "./report.txt",
+            "data//readings.csv",
+            "data/./readings.csv",
+            "report.txt/",
+            "./manifest.json",
+        )
+        manifest_path = self.bundle / "manifest.json"
+        for unsafe_path in unsafe_paths:
+            with self.subTest(path=unsafe_path):
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest["files"][0]["path"] = unsafe_path
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                self.assert_failed(f"unsafe path: {unsafe_path}")
+
+    def test_output_inside_bundle_is_rejected_without_mutating_bundle(self):
+        output = self.bundle / "verification.json"
+        before = {
+            path.relative_to(self.bundle).as_posix(): path.read_bytes()
+            for path in self.bundle.rglob("*")
+            if path.is_file()
+        }
+        proc = run("verify", self.bundle, "--output", output)
+        self.assertEqual(proc.returncode, 2)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertTrue(
+            any("--output must be outside the bundle directory" in x for x in report["findings"]),
+            report["findings"],
+        )
+        self.assertFalse(output.exists())
+        after = {
+            path.relative_to(self.bundle).as_posix(): path.read_bytes()
+            for path in self.bundle.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(before, after)
+
 if __name__ == "__main__":
     unittest.main()
