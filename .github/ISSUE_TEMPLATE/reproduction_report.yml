@@ -1,15 +1,60 @@
 name: Reproduction report
-description: You tried the quickstart or verified your own bundle — tell us how it went
-labels: [reproduction]
+description: You ran the e3bundle CLI or the browser demo — tell us how it went (adoption gate, #30)
+title: "[reproduction] <OS> · <path> · v0.1.1"
+labels: [reproduction, needs-triage]
 body:
-  - type: dropdown
-    id: what
+  - type: markdown
     attributes:
-      label: What did you run?
+      value: |
+        Thank you for testing. Failures and confusion are as useful as successes.
+        Steps are in [#30](https://github.com/Traky12/castuo-e3-001/issues/30). Do not post private keys, tokens, secrets or personal data.
+  - type: dropdown
+    id: path
+    attributes:
+      label: What did you test?
+      description: CLI reports count toward the five-tester gate in #30; browser-only reports are recorded separately.
       options:
-        - e3bundle quickstart
-        - S-001A demo bundle (examples/make_demo_bundle.py)
-        - My own bundle
+        - CLI (released v0.1.1)
+        - Browser demo (traky12.github.io/castuo-e3-001)
+        - Both CLI and browser demo
+        - My own bundle (CLI)
+        - S-001A synthetic demo (examples/make_demo_bundle.py)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Tested tag or commit
+      placeholder: v0.1.1
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and version
+      placeholder: Ubuntu 24.04 / macOS 15.1 / Windows 11 23H2
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version (CLI) or browser and version (demo)
+      placeholder: Python 3.12.4 · Firefox 131
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Exact commands you ran (or demo scenarios you used)
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual output and exit codes
+      description: "Expected: valid → VERIFIED, exit 0; tampered → FAILED with hash mismatch: data/readings.csv, exit 1."
+      render: text
     validations:
       required: true
   - type: dropdown
@@ -23,13 +68,20 @@ body:
     validations:
       required: true
   - type: textarea
-    id: details
+    id: friction
     attributes:
-      label: Commands, output and anything confusing
-      render: shell
-  - type: input
-    id: env
+      label: Anything unclear, broken or unnecessarily difficult
+  - type: textarea
+    id: evidence
     attributes:
-      label: OS, Python version and repository commit
-    validations:
-      required: true
+      label: Evidence links (optional)
+      description: Screenshots, gists or logs. Synthetic data only.
+  - type: checkboxes
+    id: independence
+    attributes:
+      label: Independence
+      options:
+        - label: I ran this without real-time help from the author, and I am not using a bot or a synthetic DEMO-* identity.
+          required: true
+        - label: This report contains no private keys, tokens, secrets or personal data.
+          required: true

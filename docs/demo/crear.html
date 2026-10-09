@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e3bundle · Crea, firma y verifica tu paquete</title>
+<meta name="description" content="Demo ejecutable de e3bundle: genera una clave Ed25519, crea el manifiesto, firma y verifica en el navegador; el resultado lo verifica también el CLI.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="dark">
+  <header class="topbar"><div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.jpg" alt="">CASTÚO-SYSTEM</a>
+    <nav aria-label="Demo">
+      <a href="./">1 · Verificar</a>
+      <a href="crear.html" aria-current="page">2 · Crear y firmar</a>
+      <a class="gh" href="https://github.com/Traky12/castuo-e3-001">GitHub</a>
+    </nav>
+  </div></header>
+  <section class="hero"><div class="wrap">
+    <div class="text">
+      <p class="eyebrow">e3bundle v0.1.1 · demo ejecutable · fase 2 de 2</p>
+      <h1>Crea, firma y verifica tu propio paquete.</h1>
+      <p class="lede">Las cuatro órdenes de e3bundle —keygen, manifest, sign y verify— ejecutadas en tu navegador. El resultado es un paquete e3.bundle.v1 que la herramienta de terminal verifica igual: la integración continua lo comprueba en cada cambio.</p>
+      <p class="small-dark">La clave privada se genera en la memoria de esta pestaña y no se envía a ningún servidor. No se conserva al cerrar o recargar la página. Usa solo datos de prueba.</p>
+    </div>
+    <img src="assets/logo.jpg" alt="Logotipo oficial de CASTÚO-SYSTEM" width="190" height="190">
+  </div></section>
+  <div class="wrap"><ol class="progress" id="progress" aria-label="Progreso"></ol></div>
+</div>
+
+<main class="wrap">
+  <div class="alert" id="unsupported" hidden>Tu navegador no admite Ed25519 en WebCrypto, así que no puede generar ni comprobar firmas aquí. Puedes hacerlo con el CLI: <code>e3bundle keygen</code>, <code>manifest</code>, <code>sign</code> y <code>verify</code>.</div>
+
+  <article class="card">
+    <h3><span class="num">01</span>Genera tu clave <span class="mono hint">e3bundle keygen</span></h3>
+    <div class="row" style="justify-content:flex-start;align-items:flex-end">
+      <div class="field" style="flex:0 1 260px"><label for="signer">Tu identificador de firmante</label><input id="signer" type="text" value="yo" maxlength="40" autocomplete="off"></div>
+      <button class="btn" id="keygen" type="button">Generar clave Ed25519</button>
+    </div>
+    <div id="keyBox" hidden><p class="hint">Clave pública (Ed25519, base64):</p><pre class="canon" id="pub"></pre><p class="hint">Clave privada: en la memoria de esta pestaña, no exportable.</p></div>
+  </article>
+
+  <article class="card">
+    <h3><span class="num">02</span>Escribe tus ficheros</h3>
+    <div class="grid2">
+      <div class="field"><label for="f1" class="mono">datos.csv</label><textarea id="f1" rows="5" spellcheck="false">lote,humedad_pct
+A-01,64
+A-02,61
+</textarea></div>
+      <div class="field"><label for="f2" class="mono">informe.md</label><textarea id="f2" rows="5" spellcheck="false"># Informe de prueba
+
+Dos lecturas de humedad de un lote ficticio.
+</textarea></div>
+    </div>
+    <p class="hint" id="editNote">Puedes escribir lo que quieras; usa solo datos de prueba.</p>
+  </article>
+
+  <article class="card">
+    <div class="phase-head"><h3><span class="num">03</span>Crea el manifiesto <span class="mono hint">e3bundle manifest</span></h3><button class="btn" id="mk" type="button">Calcular SHA-256 y crear manifest.json</button></div>
+    <div id="manBox" hidden><pre class="terminal" id="man"></pre><p class="mono" style="margin:0;font-size:13px">huella canónica: <span id="mh"></span></p></div>
+  </article>
+
+  <article class="card">
+    <div class="phase-head"><h3><span class="num">04</span>Firma el manifiesto <span class="mono hint">e3bundle sign</span></h3><button class="btn" id="sign" type="button" disabled>Firmar con Ed25519</button></div>
+    <p class="hint" id="signHint">Primero genera tu clave y crea el manifiesto.</p>
+    <pre class="terminal" id="sigs" hidden></pre>
+  </article>
+
+  <article class="card">
+    <div class="phase-head"><h3><span class="num">05</span>Verifica <span class="mono hint">e3bundle verify --min-signatures 1 --trusted-keys</span></h3><button class="btn" id="verify" type="button" disabled>Verificar ahora</button></div>
+    <div class="result" id="resBox" hidden aria-live="polite">
+      <h2 style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="status" id="status"></span><span class="exit" id="exit"></span></h2>
+      <ul class="findings" id="findings"></ul>
+    </div>
+  </article>
+
+  <article class="card">
+    <h3><span class="num">06</span>Llévalo a la terminal</h3>
+    <p style="margin:0;color:var(--ink-2)">Crea una carpeta <code>mi-paquete</code> con <code>datos.csv</code> e <code>informe.md</code> exactamente como arriba, guarda los dos JSON junto a ellos y <code>trusted.json</code> fuera, y verifica con el CLI.</p>
+    <div class="chips">
+      <button class="btn secondary" id="cpM" type="button" disabled>Copiar manifest.json</button>
+      <button class="btn secondary" id="cpS" type="button" disabled>Copiar signatures.json</button>
+      <button class="btn secondary" id="cpT" type="button" disabled>Copiar trusted.json</button>
+    </div>
+    <pre class="terminal">e3bundle verify mi-paquete --min-signatures 1 --trusted-keys trusted.json --format text</pre>
+  </article>
+
+  <section class="card" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <p style="margin:0;flex:1 1 480px;color:var(--ink-2)">Tu firma prueba que el manifiesto no cambió desde que lo firmaste, no que el contenido sea cierto ni que seas independiente. Para la revisión independiente de E3-001 hacen falta dos revisores externos.</p>
+    <a class="btn brass" href="https://github.com/Traky12/castuo-e3-001/issues/30">Cuéntanos cómo te ha ido</a>
+  </section>
+</main>
+
+<footer class="dark"><div class="wrap">
+  <span>Formato e3.bundle.v1 (experimental) · <a href="https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1">release v0.1.1</a> · <a href="https://github.com/Traky12/castuo-e3-001">código de esta página</a></span>
+  <span>Responsable: Gregorio Jiménez Bodes (<a href="https://github.com/Traky12">@Traky12</a>). Sin cookies, sin analítica, sin peticiones a terceros.</span>
+</div></footer>
+<script src="verifier.js"></script>
+<script src="crear.js"></script>
+</body>
+</html>

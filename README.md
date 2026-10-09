@@ -24,6 +24,12 @@ e3bundle --help
 
 Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.1](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
 
+## Try it in your browser
+
+Verify the signed example bundles without installing anything: **[open the browser demo](https://traky12.github.io/castuo-e3-001/)**.
+
+The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519 verification locally with WebCrypto. You can tamper with the files in eight ways, or create and sign your own bundle and verify it later with the CLI. On every change, CI checks that the demo gives the same result as the `v0.1.1` CLI (`docs/demo/tests/conformance.mjs`). Data is synthetic; a successful verification does not certify that content is true.
+
 ## 30-second demo
 
 ![Terminal: the valid bundle verifies with exit code 0; the tampered bundle fails with hash mismatch: data/readings.csv and exit code 1](docs/assets/demo.svg)

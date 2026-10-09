@@ -1,6 +1,6 @@
 name: Feature request
 description: Propose an improvement to e3bundle, the Action or the documentation
-labels: [enhancement]
+labels: [enhancement, needs-triage]
 body:
   - type: textarea
     id: problem
