@@ -12,3 +12,5 @@ external-evidence-validation.json
 g2-decision.json
 runner-attestation.json
 demo/
+build/
+*.egg-info/

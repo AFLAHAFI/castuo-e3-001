@@ -1,0 +1,88 @@
+name: "e3bundle verify"
+description: "Verify an evidence bundle offline: SHA-256 manifest integrity and Ed25519 signatures, optionally from pinned keys."
+author: "Traky12"
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  bundle:
+    description: "Path to the bundle directory (must contain manifest.json)."
+    required: true
+  min-signatures:
+    description: "Minimum number of valid (and, with trusted-keys, pinned) signatures."
+    required: false
+    default: "0"
+  trusted-keys:
+    description: "Path to a JSON file {signer_id: public_key_b64}. Only these keys count when set."
+    required: false
+    default: ""
+  allow-extra:
+    description: "Set to 'true' to accept files that are not declared in the manifest."
+    required: false
+    default: "false"
+  report-path:
+    description: "Where to write the JSON verification report."
+    required: false
+    default: "e3bundle-report.json"
+  python-version:
+    description: "Python version used to run the verifier."
+    required: false
+    default: "3.12"
+
+outputs:
+  status:
+    description: "VERIFIED, FAILED or ERROR."
+    value: ${{ steps.verify.outputs.status }}
+  report-path:
+    description: "Path of the JSON verification report."
+    value: ${{ steps.verify.outputs.report-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install e3bundle
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: python -m pip install --disable-pip-version-check --quiet "$ACTION_PATH"
+
+    - name: Verify bundle
+      id: verify
+      shell: bash
+      env:
+        BUNDLE: ${{ inputs.bundle }}
+        MIN_SIGNATURES: ${{ inputs.min-signatures }}
+        TRUSTED_KEYS: ${{ inputs.trusted-keys }}
+        ALLOW_EXTRA: ${{ inputs.allow-extra }}
+        REPORT_PATH: ${{ inputs.report-path }}
+      run: |
+        set -uo pipefail
+        args=(verify "$BUNDLE" --min-signatures "$MIN_SIGNATURES" --output "$REPORT_PATH")
+        if [ -n "$TRUSTED_KEYS" ]; then args+=(--trusted-keys "$TRUSTED_KEYS"); fi
+        if [ "$ALLOW_EXTRA" = "true" ]; then args+=(--allow-extra); fi
+        e3bundle "${args[@]}" > /dev/null
+        code=$?
+        if [ -f "$REPORT_PATH" ]; then
+          status=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["status"])' "$REPORT_PATH")
+        else
+          status=ERROR
+        fi
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        echo "report-path=$REPORT_PATH" >> "$GITHUB_OUTPUT"
+        {
+          echo "### e3bundle verify: \`$status\`"
+          echo
+          echo "Bundle: \`$BUNDLE\` · minimum signatures: $MIN_SIGNATURES · pinned keys: ${TRUSTED_KEYS:-none}"
+          if [ -f "$REPORT_PATH" ]; then
+            python -c 'import json,sys; [print(f"- {f}") for f in json.load(open(sys.argv[1]))["findings"]]' "$REPORT_PATH"
+          fi
+          echo
+          echo "_Integrity and signature check only; not a statement that the content is true._"
+        } >> "$GITHUB_STEP_SUMMARY"
+        exit $code

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "e3bundle"
+version = "0.1.0"
+description = "Create, sign and verify portable evidence bundles offline with SHA-256 manifests and Ed25519 signatures."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Gregorio J. Jiménez Bodes" }]
+keywords = ["evidence", "integrity", "sha256", "ed25519", "provenance", "reproducibility", "offline"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security :: Cryptography",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = ["cryptography>=50.0.2"]
+
+[project.scripts]
+e3bundle = "e3bundle:main"
+
+[project.urls]
+Homepage = "https://github.com/Traky12/castuo-e3-001"
+Issues = "https://github.com/Traky12/castuo-e3-001/issues"
+Changelog = "https://github.com/Traky12/castuo-e3-001/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+package-dir = { "" = "scripts" }
+py-modules = ["e3bundle"]

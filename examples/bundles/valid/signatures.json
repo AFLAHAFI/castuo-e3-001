@@ -1,0 +1,20 @@
+[
+  {
+    "format": "e3.signature.v1",
+    "manifest_hash": "sha256:3791f139670d65d3de9c6fccbca4f9021b06551361d5eb492802379c5402c9f1",
+    "public_key_b64": "NEKxEbwhrocnJ3xDgPhcaUiPyQBo7c6bP+MJIkLrT2k=",
+    "role": "runner",
+    "signature_b64": "ArVzRx+k64LkpCy7+Ir8RG4xybIR5hoaw07COTJ3d9t02ojQdszp3FIgUpthxpgR3N4qPH2X2KivvwVjxQ4sCg==",
+    "signed_at": "2026-10-09T13:48:03Z",
+    "signer_id": "example-runner"
+  },
+  {
+    "format": "e3.signature.v1",
+    "manifest_hash": "sha256:3791f139670d65d3de9c6fccbca4f9021b06551361d5eb492802379c5402c9f1",
+    "public_key_b64": "PKD6ksJOmFX1GD72KW68750m/n1ljidjrxdWM+7zTsQ=",
+    "role": "reviewer",
+    "signature_b64": "dXbcBLCNCErN1rabhd7ryRVW9yzJWoAE6yXxz8BeVlSMyT4QHLyO/a4Ep0RtX3IIy1Ktbsr7wXIRsZmmm1fCBA==",
+    "signed_at": "2026-10-09T13:48:04Z",
+    "signer_id": "example-reviewer"
+  }
+]
