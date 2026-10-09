@@ -18,11 +18,11 @@ Test reports, datasets, audit exports and lab results are often shared as plain 
 ## Install
 
 ```bash
-python -m pip install "git+https://github.com/Traky12/castuo-e3-001"
+python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.0"
 e3bundle --help
 ```
 
-Python 3.11 or newer. Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
+Python 3.11 or newer. Latest release: [v0.1.0](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
 
 ## 30-second demo
 
@@ -92,7 +92,6 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). The
 
 ## Roadmap (proposed, not committed)
 
-- `v0.1.0` tagged release once the clean-install path is verified.
 - PyPI package.
 - Detached signature export and key rotation guidance.
 - Optional RFC 3161 timestamping.
