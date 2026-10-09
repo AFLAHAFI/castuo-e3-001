@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>e3bundle · Crea, firma y verifica tu paquete</title>
 <meta name="description" content="Demo ejecutable de e3bundle: genera una clave Ed25519, crea el manifiesto, firma y verifica en el navegador; el resultado lo verifica también el CLI.">
@@ -34,8 +35,8 @@
 
   <article class="card">
     <h3><span class="num">01</span>Genera tu clave <span class="mono hint">e3bundle keygen</span></h3>
-    <div class="row" style="justify-content:flex-start;align-items:flex-end">
-      <div class="field" style="flex:0 1 260px"><label for="signer">Tu identificador de firmante</label><input id="signer" type="text" value="yo" maxlength="40" autocomplete="off"></div>
+    <div class="row start">
+      <div class="field narrow"><label for="signer">Tu identificador de firmante</label><input id="signer" type="text" value="yo" maxlength="40" autocomplete="off"></div>
       <button class="btn" id="keygen" type="button">Generar clave Ed25519</button>
     </div>
     <div id="keyBox" hidden><p class="hint">Clave pública (Ed25519, base64):</p><pre class="canon" id="pub"></pre><p class="hint">Clave privada: en la memoria de esta pestaña, no exportable.</p></div>
@@ -58,7 +59,7 @@ Dos lecturas de humedad de un lote ficticio.
 
   <article class="card">
     <div class="phase-head"><h3><span class="num">03</span>Crea el manifiesto <span class="mono hint">e3bundle manifest</span></h3><button class="btn" id="mk" type="button">Calcular SHA-256 y crear manifest.json</button></div>
-    <div id="manBox" hidden><pre class="terminal" id="man"></pre><p class="mono" style="margin:0;font-size:13px">huella canónica: <span id="mh"></span></p></div>
+    <div id="manBox" hidden><pre class="terminal" id="man"></pre><p class="mono hash-line">huella canónica: <span id="mh"></span></p></div>
   </article>
 
   <article class="card">
@@ -70,14 +71,14 @@ Dos lecturas de humedad de un lote ficticio.
   <article class="card">
     <div class="phase-head"><h3><span class="num">05</span>Verifica <span class="mono hint">e3bundle verify --min-signatures 1 --trusted-keys</span></h3><button class="btn" id="verify" type="button" disabled>Verificar ahora</button></div>
     <div class="result" id="resBox" hidden aria-live="polite">
-      <h2 style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="status" id="status"></span><span class="exit" id="exit"></span></h2>
+      <h2 class="status-line"><span class="status" id="status"></span><span class="exit" id="exit"></span></h2>
       <ul class="findings" id="findings"></ul>
     </div>
   </article>
 
   <article class="card">
     <h3><span class="num">06</span>Llévalo a la terminal</h3>
-    <p style="margin:0;color:var(--ink-2)">Crea una carpeta <code>mi-paquete</code> con <code>datos.csv</code> e <code>informe.md</code> exactamente como arriba, guarda los dos JSON junto a ellos y <code>trusted.json</code> fuera, y verifica con el CLI.</p>
+    <p class="muted-p">Crea una carpeta <code>mi-paquete</code> con <code>datos.csv</code> e <code>informe.md</code> exactamente como arriba, guarda los dos JSON junto a ellos y <code>trusted.json</code> fuera, y verifica con el CLI.</p>
     <div class="chips">
       <button class="btn secondary" id="cpM" type="button" disabled>Copiar manifest.json</button>
       <button class="btn secondary" id="cpS" type="button" disabled>Copiar signatures.json</button>
@@ -86,9 +87,17 @@ Dos lecturas de humedad de un lote ficticio.
     <pre class="terminal">e3bundle verify mi-paquete --min-signatures 1 --trusted-keys trusted.json --format text</pre>
   </article>
 
-  <section class="card" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between">
-    <p style="margin:0;flex:1 1 480px;color:var(--ink-2)">Tu firma prueba que el manifiesto no cambió desde que lo firmaste, no que el contenido sea cierto ni que seas independiente. Para la revisión independiente de E3-001 hacen falta dos revisores externos.</p>
+  <section class="card closing">
+    <p class="muted-p grow">Tu firma prueba que el manifiesto no cambió desde que lo firmaste, no que el contenido sea cierto ni que seas independiente. Para la revisión independiente de E3-001 hacen falta dos revisores externos.</p>
     <a class="btn brass" href="https://github.com/Traky12/castuo-e3-001/issues/30">Cuéntanos cómo te ha ido</a>
+  </section>
+
+  <section class="card closing" aria-labelledby="reset-title">
+    <div class="muted-p grow">
+      <h3 id="reset-title">Reiniciar sesión</h3>
+      <p class="muted-p" id="resetNote">Descarta la clave, el manifiesto, las firmas y el resultado, y vuelve a los ficheros de ejemplo. La página deja de guardar la clave; el navegador libera la memoria cuando decide, así que no se puede asegurar un borrado físico. Cerrar la pestaña también la descarta.</p>
+    </div>
+    <button class="btn secondary" id="reset" type="button" aria-describedby="resetNote">Reiniciar sesión</button>
   </section>
 </main>
 

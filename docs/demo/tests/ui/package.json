@@ -1,0 +1,12 @@
+{
+  "name": "e3bundle-demo-ui-tests",
+  "private": true,
+  "description": "Browser tests for the e3bundle demo (Chromium, Firefox, WebKit).",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

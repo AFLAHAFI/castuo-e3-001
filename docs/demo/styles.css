@@ -124,3 +124,22 @@ footer.dark a { color: var(--brass-light); }
 #mhash { overflow-wrap: anywhere; word-break: break-all; }
 .result { align-items: flex-start; }
 .result-explain .findings { flex: none; }
+/* Classes replacing inline styles, so the CSP can forbid them (style-src 'self'). */
+.field.end { justify-content: flex-end; }
+.field.narrow { flex: 0 1 260px; }
+.row.start { justify-content: flex-start; align-items: flex-end; }
+.status-line { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.hash-line { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.trust-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.trust-item { display: flex; gap: 10px; flex-wrap: wrap; }
+.signer-col { min-width: 160px; }
+.sig-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.mt0 { margin-top: 0; }
+.muted-p { margin: 0; color: var(--ink-2); }
+.muted-p.grow { flex: 1 1 480px; }
+.phases { display: flex; flex-direction: column; gap: 22px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .btn { flex: 1 1 180px; }
+.status.ERROR { background: #6b5a1f; }
+/* The hidden attribute must win over component display rules (e.g. .result is flex). */
+[hidden] { display: none !important; }

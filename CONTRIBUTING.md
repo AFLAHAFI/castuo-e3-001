@@ -47,6 +47,16 @@ python -m pytest tests -v
 
 The unit and CLI test job runs on Ubuntu, macOS and Windows with Python 3.11, 3.12 and 3.13. The composite GitHub Action and clean-wheel packaging smoke remain on Ubuntu. Symlink tests skip only when the current runner cannot create them; other platform-specific failures must be investigated, not waived.
 
+To run the browser demo checks locally (Node 22, Python 3.11+): assemble the site as `pages.yml` does into `_site/` at the repository root, then
+
+```bash
+node docs/demo/tests/conformance.mjs <bundles> python <e3bundle.py>         # 8 scenarios vs the released CLI
+node docs/demo/tests/input-conformance.mjs <bundles> python <e3bundle.py>   # malformed inputs vs the CLI
+cd docs/demo/tests/ui && npm ci && npx playwright install chromium firefox webkit && npx playwright test
+```
+
+`<bundles>` and `<e3bundle.py>` come from the release tag (`git archive v0.1.1 examples/bundles scripts/e3bundle.py`). CI runs the same steps on Linux.
+
 To build and smoke-test the container image locally:
 
 ```bash

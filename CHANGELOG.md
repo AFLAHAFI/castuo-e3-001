@@ -5,10 +5,14 @@ All notable changes to this repository are documented here. Versions follow [Sem
 ## [Unreleased]
 
 ### Added
+- Browser demo hardening: restrictive Content-Security-Policy (`<meta>`; GitHub Pages cannot send headers), an input layer (`docs/demo/input.js`) that follows the CLI's input contract so unreadable input is `ERROR` (exit 2) and never a verdict, a "Reiniciar sesión" control on both pages, and a Playwright suite run in CI on Chromium, Firefox and WebKit (scenarios, malformed input, reset, same-origin-only requests, CSP enforcement, keyboard, no overflow at 375/768/1440). `tests/input-conformance.mjs` compares nine malformed inputs with the v0.1.1 CLI. Threat model in `docs/demo/THREAT-MODEL.md`. `verifier.js` is unchanged.
 - Browser demo, guided journey: the problem it addresses, how it works, a per-scenario explanation, a result summary with what each finding means and the next step, a checks table with consequences, the limits of VERIFIED, local CLI steps, contribution and private vulnerability reporting, and a traceability block. Verification logic (`verifier.js`) is unchanged; a long manifest hash no longer overflows on phones.
 - Container image `ghcr.io/traky12/e3bundle` for `linux/amd64` and `linux/arm64` (non-root, no `latest` tag), built from the release tag by `container.yml` with SBOM, build provenance and a GitHub artifact attestation. Pull requests that touch the image are built and smoke-tested (valid bundle exit 0, tampered bundle exit 1).
 - Reproduction report form: tested path (CLI or browser demo), version, environment, commands, exit codes, friction, evidence and an independence confirmation, for the five-tester gate in #30.
 - Browser demo in `docs/demo/`, published with GitHub Pages: verifies the `v0.1.1` example bundles with WebCrypto (SHA-256, Ed25519) under eight tampering scenarios, and creates and signs new bundles that the CLI verifies. The `pages.yml` workflow takes the bundles and CLI from the release tag and fails if the demo and the CLI disagree.
+
+### Fixed
+- Create page: the empty result box was visible before any verification (`.result` display overrode `hidden`).
 
 ## [0.1.1] - 2026-10-09
 

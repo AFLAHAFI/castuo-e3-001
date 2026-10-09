@@ -14,3 +14,4 @@ runner-attestation.json
 /demo/
 build/
 *.egg-info/
+/_site/

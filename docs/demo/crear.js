@@ -26,7 +26,18 @@
     setTimeout(() => { btn.textContent = label; }, 1600);
   }
 
+  function reset() {
+    Object.assign(st, { key: null, pub: '', manifest: null, manifestHash: '', signatures: [], signedHash: '', verified: false });
+    $('f1').value = $('f1').defaultValue; $('f2').value = $('f2').defaultValue; $('signer').value = $('signer').defaultValue;
+    ['pub', 'man', 'mh', 'sigs', 'status', 'exit'].forEach((id) => { $(id).textContent = ''; });
+    $('findings').replaceChildren();
+    ['keyBox', 'manBox', 'sigs', 'resBox'].forEach((id) => { $(id).hidden = true; });
+    $('keygen').textContent = 'Generar clave Ed25519';
+    refresh();
+  }
+
   async function start() {
+    $('reset').addEventListener('click', reset);
     if (!(window.crypto && window.crypto.subtle) || !(await E3.ed25519Supported())) {
       $('unsupported').hidden = false;
       ['keygen', 'mk'].forEach((id) => { $(id).disabled = true; });

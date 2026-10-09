@@ -33,7 +33,7 @@
     return 'El paquete no cumple una de las comprobaciones; consulta el informe JSON.';
   }
 
-  const data = { manifest: null, signatures: null, trusted: null, files: {}, tamperedCsv: null };
+  const data = { manifest: null, signatures: null, trusted: null, files: {}, tamperedCsv: null, inputFindings: [], inputError: null };
   let scenario = 'original';
   let edited = false;
   let lastReport = null;
@@ -49,12 +49,19 @@
     const get = async (p, kind) => {
       const res = await fetch(BASE + p, { cache: 'no-store' });
       if (!res.ok) throw new Error(p + ' ' + res.status);
-      return kind === 'json' ? res.json() : new Uint8Array(await res.arrayBuffer());
+      return kind === 'text' ? res.text() : new Uint8Array(await res.arrayBuffer());
     };
-    data.manifest = await get('valid/manifest.json', 'json');
-    data.signatures = await get('valid/signatures.json', 'json');
-    data.trusted = await get('trusted-keys.json', 'json');
-    for (const e of data.manifest.files) data.files[e.path] = await get('valid/' + e.path);
+    // JSON goes through the input layer: an unreadable manifest or key file is ERROR (exit 2), as in the CLI.
+    const parsed = E3Input.parseVerifyInput({
+      manifestText: await get('valid/manifest.json', 'text'),
+      signaturesText: await get('valid/signatures.json', 'text'),
+      trustedText: await get('trusted-keys.json', 'text'),
+    });
+    if (parsed.error) { data.inputError = parsed.error; return; }
+    data.manifest = parsed.input.manifest; data.signatures = parsed.input.signatures; data.trusted = parsed.input.trusted;
+    data.inputFindings = parsed.findings;
+    const entries = Array.isArray(data.manifest.files) ? data.manifest.files : [];
+    for (const e of entries) if (e && E3.isSafePath(e.path)) data.files[e.path] = await get('valid/' + e.path);
     data.tamperedCsv = await get('tampered/data/readings.csv');
   }
 
@@ -81,7 +88,7 @@
     const csvBytes = enc.encode($('csv').value);
     const inp = input(edited ? 'original' : scenario, csvBytes);
     const t0 = performance.now();
-    const r = await E3.verifyBundle(inp);
+    const r = E3Input.withInputFindings(await E3.verifyBundle(inp), data.inputFindings);
     const ms = Math.max(1, Math.round(performance.now() - t0));
     lastReport = r.report;
     const rep = r.report;
@@ -140,7 +147,7 @@
     for (const s of r.phases.signatures) {
       const good = s.signatureOk && s.hashOk;
       const card = el('div', { class: 'sig' + (good ? '' : ' bad') });
-      const head = el('div', { style: 'display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap' });
+      const head = el('div', { class: 'sig-head' });
       head.append(el('span', { class: 'mono' }, s.signer), el('span', { class: 'hint' }, 'rol: ' + s.role));
       const l1 = el('span', {}, 'Firma criptográfica: '); l1.append(el('span', { class: s.signatureOk ? 'yes' : 'no' }, s.signatureOk ? 'válida' : 'inválida'));
       const l2 = el('span', {}, 'Firmó este manifiesto: '); l2.append(el('span', { class: s.hashOk ? 'yes' : 'no' }, s.hashOk ? 'sí' : 'no, firmó otra versión'));
@@ -153,11 +160,11 @@
       ? 'Con --trusted-keys solo cuentan las firmas hechas con las claves públicas que tú has fijado.'
       : 'Sin --trusted-keys, una firma válida solo prueba que alguien con esa clave firmó; no dice quién. Por eso el resultado puede ser VERIFIED con la confianza sin comprobar.';
     for (const s of r.phases.signatures) {
-      const li = el('li', { style: 'display:flex;gap:10px;flex-wrap:wrap' });
+      const li = el('li', { class: 'trust-item' });
       let cls = 'maybe'; let text = 'confianza no comprobada (sin claves fijadas)';
       if (inp.trusted && !s.counted) { cls = 'no'; text = 'no cuenta: la firma no es válida para este manifiesto'; }
       else if (inp.trusted) { cls = s.trusted ? 'yes' : 'no'; text = s.trusted ? 'clave fijada: cuenta' : 'clave no fijada: no cuenta'; }
-      li.append(el('span', { class: 'mono', style: 'min-width:160px' }, s.signer), el('span', { class: cls }, text)); tl.append(li);
+      li.append(el('span', { class: 'mono signer-col' }, s.signer), el('span', { class: cls }, text)); tl.append(li);
     }
     const trustOk = inp.trusted && r.phases.signatures.every((s) => s.trusted);
     setPill('p4', !inp.trusted ? 'warn' : (trustOk ? 'ok' : 'bad'), !inp.trusted ? 'no comprobada' : (trustOk ? 'correcto' : 'fallo detectado'));
@@ -180,10 +187,38 @@
     }
   }
 
+  // Input could not be read: no cryptographic check ran, so no phase is shown and nothing can be VERIFIED.
+  function renderInputError(err) {
+    lastReport = err.report;
+    $('status').textContent = 'ERROR'; $('status').className = 'status ERROR';
+    $('exit').textContent = 'exit ' + err.exitCode;
+    $('timing').textContent = 'La verificación no ha empezado.';
+    const f = $('findings'); f.replaceChildren();
+    for (const x of err.report.findings) f.append(el('li', { class: 'bad' }, '- ' + x));
+    const sum = $('summary'); sum.replaceChildren(el('li', { class: 'warn' }, 'entrada no válida: no se ha comprobado nada'));
+    $('meaning').replaceChildren(el('li', {}, 'El paquete no se ha podido leer como e3.bundle.v1, así que no hay resultado criptográfico: ni íntegro ni manipulado.'));
+    $('next').textContent = 'Comprueba que manifest.json y el fichero de claves son JSON válidos y tienen la forma esperada. Con el CLI obtendrías el mismo ERROR (exit 2).';
+    $('phases').hidden = true;
+    $('scenarioHelp').textContent = 'No se pueden ejecutar escenarios sin un paquete legible.';
+    $('report').textContent = JSON.stringify(err.report, null, 2);
+    ['run', 'csv'].forEach((id) => { $(id).disabled = true; });
+    $('scenarios').replaceChildren();
+  }
+
+  function reset() {
+    scenario = 'original'; edited = false; lastReport = null;
+    $('csv').value = dec.decode(data.files['data/readings.csv']);
+    $('copy').textContent = 'Copiar JSON';
+    renderScenarios();
+    run();
+  }
+
   async function start() {
     if (!(window.crypto && window.crypto.subtle)) { $('unsupported').hidden = false; return; }
     if (!(await E3.ed25519Supported())) $('unsupported').hidden = false;
     try { await load(); } catch (e) { $('loadError').hidden = false; return; }
+    if (data.inputError) { renderInputError(data.inputError); return; }
+    $('reset').addEventListener('click', reset);
     $('csv').value = dec.decode(data.files['data/readings.csv']);
     $('csv').addEventListener('input', () => { edited = true; renderScenarios(); $('scenarioHelp').textContent = EDITED_HELP; $('csvNote').textContent = 'Has editado el fichero. Pulsa «Verificar ahora».'; });
     $('run').addEventListener('click', run);

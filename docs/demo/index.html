@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>e3bundle · Evidencia verificable para datos de campo</title>
 <meta name="description" content="Demo ejecutable de e3bundle: comprueba en tu navegador, con SHA-256 y Ed25519, que un paquete de evidencias no ha sido alterado. Datos sintéticos de la release v0.1.1.">
@@ -78,8 +79,12 @@
         <textarea id="csv" rows="5" spellcheck="false"></textarea>
         <p class="hint" id="csvNote">Cargando…</p>
       </div>
-      <div class="field" style="justify-content: flex-end">
-        <button class="btn" id="run" type="button">Verificar ahora</button>
+      <div class="field end">
+        <div class="actions">
+          <button class="btn" id="run" type="button">Verificar ahora</button>
+          <button class="btn secondary" id="reset" type="button" aria-describedby="resetNote">Reiniciar sesión</button>
+        </div>
+        <p class="hint" id="resetNote">Reiniciar vuelve al paquete original y descarta lo que has editado y el último informe. La página deja de guardarlo; el navegador libera la memoria cuando decide.</p>
         <p class="hint">Equivalente en terminal:</p>
         <pre class="terminal" id="cli"></pre>
       </div>
@@ -89,7 +94,7 @@
   <section class="result" aria-live="polite" aria-labelledby="res-title">
     <div class="result-main">
       <p class="eyebrow">Resultado</p>
-      <h2 id="res-title" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><span class="status" id="status">…</span><span class="exit" id="exit">exit —</span></h2>
+      <h2 id="res-title" class="status-line"><span class="status" id="status">…</span><span class="exit" id="exit">exit —</span></h2>
       <ul class="summary" id="summary"></ul>
       <p class="small-dark" id="timing">Calculando…</p>
     </div>
@@ -109,6 +114,7 @@
     </dl>
   </section>
 
+  <div id="phases" class="phases">
   <h2>Qué se ha comprobado, fase a fase</h2>
 
   <article class="card">
@@ -123,7 +129,7 @@
     <div class="phase-head"><h3><span class="num">02</span>Huella del manifiesto canónico</h3><span class="pill" id="p2">pendiente</span></div>
     <p class="body-2">Las firmas se hacen sobre esta forma canónica del manifiesto (claves ordenadas, sin espacios). Si el manifiesto cambia en cualquier detalle, cambia la huella y las firmas dejan de servir.</p>
     <pre class="canon" id="canon"></pre>
-    <p class="mono" style="margin:0;font-size:13px">calculada: <span id="mhash"></span></p>
+    <p class="mono hash-line">calculada: <span id="mhash"></span></p>
   </article>
 
   <article class="card">
@@ -134,13 +140,14 @@
   <article class="card">
     <div class="phase-head"><h3><span class="num">04</span>Confianza en las claves</h3><span class="pill" id="p4">pendiente</span></div>
     <p class="body-2" id="trustExplain"></p>
-    <ul id="trust" style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px"></ul>
+    <ul id="trust" class="trust-list"></ul>
   </article>
 
   <article class="card">
     <div class="phase-head"><h3><span class="num">05</span>Informe JSON, como el del CLI</h3><button class="btn secondary" type="button" id="copy">Copiar JSON</button></div>
     <pre class="terminal" id="report"></pre>
   </article>
+  </div>
 
   <section class="card" aria-labelledby="checks-title">
     <p class="kicker">Qué comprueba</p>
@@ -170,7 +177,7 @@
         <li>se alcanza el umbral mínimo de firmas confiables.</li>
       </ul>
       <div>
-        <p class="body-2" style="margin-top:0"><strong>No significa</strong> que:</p>
+        <p class="body-2 mt0"><strong>No significa</strong> que:</p>
         <ul class="crosses">
           <li>el contenido sea verdadero;</li>
           <li>los firmantes sean independientes u honestos;</li>
@@ -243,6 +250,7 @@ e3bundle verify examples/bundles/valid \
   <span>Responsable: Gregorio Jiménez Bodes (<a href="https://github.com/Traky12">@Traky12</a>). Sin cookies, sin analítica, sin peticiones a terceros. El logotipo identifica el proyecto; no implica certificación ni madurez operativa.</span>
 </div></footer>
 <script src="verifier.js"></script>
+<script src="input.js"></script>
 <script src="demo.js"></script>
 </body>
 </html>
