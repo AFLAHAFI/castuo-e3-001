@@ -64,25 +64,35 @@ jobs:
           min-signatures: "2"
           trusted-keys: examples/bundles/trusted-keys.json
           report-path: reports/valid.json
-      - name: Tampered example must fail
+      - name: Tampered example reports FAILED (fail-on-error false)
         id: tampered
-        continue-on-error: true
         uses: ./
         with:
           bundle: examples/bundles/tampered
           min-signatures: "2"
           trusted-keys: examples/bundles/trusted-keys.json
           report-path: reports/tampered.json
+          fail-on-error: "false"
+      - name: Tampered example fails the step by default
+        id: tampered_default
+        continue-on-error: true
+        uses: ./
+        with:
+          bundle: examples/bundles/tampered
+          min-signatures: "2"
+          trusted-keys: examples/bundles/trusted-keys.json
+          report-path: reports/tampered-default.json
       - name: Assert outcomes
         env:
           VALID_STATUS: ${{ steps.valid.outputs.status }}
           TAMPERED_STATUS: ${{ steps.tampered.outputs.status }}
-          TAMPERED_OUTCOME: ${{ steps.tampered.outcome }}
+          DEFAULT_OUTCOME: ${{ steps.tampered_default.outcome }}
         run: |
           test "$VALID_STATUS" = VERIFIED
           test "$TAMPERED_STATUS" = FAILED
-          test "$TAMPERED_OUTCOME" = failure
+          test "$DEFAULT_OUTCOME" = failure
           grep -q 'hash mismatch: data/readings.csv' reports/tampered.json
+          grep -q 'hash mismatch: data/readings.csv' reports/tampered-default.json
 
   package:
     runs-on: ubuntu-latest

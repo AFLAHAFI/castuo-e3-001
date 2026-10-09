@@ -25,6 +25,10 @@ inputs:
     description: "Where to write the JSON verification report."
     required: false
     default: "e3bundle-report.json"
+  fail-on-error:
+    description: "Fail the step when verification does not pass. Set to 'false' to always read the status output and decide yourself."
+    required: false
+    default: "true"
   python-version:
     description: "Python version used to run the verifier."
     required: false
@@ -74,6 +78,7 @@ runs:
           status=ERROR
         fi
         echo "status=$status" >> "$GITHUB_OUTPUT"
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
         echo "report-path=$REPORT_PATH" >> "$GITHUB_OUTPUT"
         {
           echo "### e3bundle verify: \`$status\`"
@@ -85,4 +90,13 @@ runs:
           echo
           echo "_Integrity and signature check only; not a statement that the content is true._"
         } >> "$GITHUB_STEP_SUMMARY"
-        exit $code
+
+    - name: Fail on verification failure
+      if: inputs.fail-on-error == 'true' && steps.verify.outputs.exit-code != '0'
+      shell: bash
+      env:
+        STATUS: ${{ steps.verify.outputs.status }}
+        CODE: ${{ steps.verify.outputs.exit-code }}
+      run: |
+        echo "::error title=e3bundle::verification status $STATUS"
+        exit "$CODE"

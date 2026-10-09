@@ -71,7 +71,7 @@ What `verify` detects: modified, missing and undeclared files; path traversal an
     trusted-keys: .github/trusted-keys.json
 ```
 
-The step fails when verification fails, writes the JSON report (`report-path`, default `e3bundle-report.json`), exposes `status` as an output and adds the findings to the job summary.
+The step writes the JSON report (`report-path`, default `e3bundle-report.json`), adds the findings to the job summary and fails when verification does not pass. Set `fail-on-error: "false"` to keep the job going and branch on the `status` output (`VERIFIED`, `FAILED` or `ERROR`) instead; GitHub does not expose outputs of a failed step.
 
 ## Limits
 
