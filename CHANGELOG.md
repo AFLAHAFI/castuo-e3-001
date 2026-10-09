@@ -4,7 +4,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
-**Candidate package version:** `0.1.1` (not tagged or released yet).
+## [0.1.1] - 2026-10-09
 
 ### Added
 - `e3bundle verify --format text`: human-readable summary on stdout; JSON stays the default, `--output` always writes JSON, exit codes unchanged. Without `--trusted-keys` the summary says `trust not checked`. Contributed by @AFLAHAFI (#32, closes #27).
