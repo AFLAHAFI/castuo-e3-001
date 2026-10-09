@@ -247,6 +247,53 @@ class E3BundleTests(unittest.TestCase):
             report["findings"],
         )
 
+    def test_symlinked_reserved_metadata_is_rejected_before_reading(self):
+        manifest_path = self.bundle / "manifest.json"
+        external_manifest = self.root / "outside-manifest.json"
+        external_manifest.write_bytes(manifest_path.read_bytes())
+        manifest_path.unlink()
+        try:
+            manifest_path.symlink_to(external_manifest)
+        except OSError as exc:
+            self.skipTest(f"symlinks unavailable: {exc}")
+        proc = run("verify", self.bundle)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn(
+            "symlinks are not allowed in a bundle: manifest.json",
+            report["findings"],
+        )
+
+        manifest_path.unlink()
+        manifest_path.write_bytes(external_manifest.read_bytes())
+        self.sign("alice")
+        signatures_path = self.bundle / "signatures.json"
+        external_signatures = self.root / "outside-signatures.json"
+        external_signatures.write_bytes(signatures_path.read_bytes())
+        signatures_path.unlink()
+        signatures_path.symlink_to(external_signatures)
+        proc = run("verify", self.bundle, "--min-signatures", 1)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn(
+            "symlinks are not allowed in a bundle: signatures.json",
+            report["findings"],
+        )
+
+    def test_symlinked_bundle_root_is_rejected(self):
+        alias = self.root / "bundle-alias"
+        try:
+            alias.symlink_to(self.bundle, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"directory symlinks unavailable: {exc}")
+        proc = run("verify", alias)
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["status"], "ERROR")
+        self.assertIn("bundle directory must not be a symlink", report["findings"])
+
     def test_manifest_refuses_to_overwrite_signed_bundle(self):
         self.sign("alice")
         proc = run("manifest", self.bundle, "--bundle-id", "demo-002")
