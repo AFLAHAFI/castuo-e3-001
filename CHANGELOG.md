@@ -2,7 +2,9 @@
 
 All notable changes to this repository are documented here. Versions follow [Semantic Versioning](https://semver.org/); before `1.0` the bundle format and command-line interface may change.
 
-## [0.1.0] - Unreleased
+## [Unreleased]
+
+## [0.1.0] - 2026-10-09
 
 ### Added
 - `scripts/e3bundle.py`: generic offline bundle tool (`keygen`, `manifest`, `sign`, `verify`) for format `e3.bundle.v1` (experimental). Detects modified, missing and undeclared files, unsafe paths, symlinks, forged or stale signatures and duplicate signers; supports pinned trusted keys and a signature threshold.
@@ -16,3 +18,6 @@ All notable changes to this repository are documented here. Versions follow [Sem
 ### Changed
 - README reorganised product-first (problem, install, demo, limits, security, roadmap); the E3-001 protocol, authority boundary and history follow below, unchanged in substance.
 - `PROTOCOL.md` states that `scripts/run_s001a_foreign_replay.py` is not published in this repository.
+
+[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0
