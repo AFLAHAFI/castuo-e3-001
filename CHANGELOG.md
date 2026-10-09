@@ -4,14 +4,18 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-09
+
 ### Added
-- Community files: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`, `GOVERNANCE.md` (including the AI-assisted development policy), `CONTRIBUTORS.md` and a feature request form. `CONTRIBUTING.md` reorganised into three contribution levels.
-- Added regression coverage for malformed `signatures.json` (verification failure, exit 1) and a non-UTF-8 manifest (input error, exit 2).
+- `e3bundle verify --format text`: human-readable summary on stdout; JSON stays the default, `--output` always writes JSON, exit codes unchanged. Without `--trusted-keys` the summary says `trust not checked`. Contributed by @AFLAHAFI (#32, closes #27).
+- Unit/CLI tests on Ubuntu, macOS and Windows with Python 3.11–3.13 (closes #23).
+- Regression tests for a malformed `signatures.json` (exit 1) and a non-UTF-8 manifest (exit 2) (closes #35).
+- Community files: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SUPPORT.md`, `GOVERNANCE.md` with the AI-assisted development policy, `CONTRIBUTORS.md`, a feature request form, and contribution levels in `CONTRIBUTING.md`.
+- `docs/PUBLIC_ADOPTION_PLAN.md` and a demo image in the README.
 
-
-### Security and adoption
-- Synthetic S-001A demonstration bundles are explicitly labelled `DEMO_VALIDATED` and blocked from G2/staging eligibility; they cannot stand in for external replay or independent human review.
-- Added the public adoption roadmap and measurable tester-first milestones.
+### Changed
+- The S-001A validator labels synthetic `DEMO-*` bundles `DEMO_VALIDATED` (`g2_eligible: false`) and the G2 evaluator blocks them; they cannot stand in for external replay or independent review.
+- The full E3-001 protocol section moved from the README to `docs/E3-001.md`; the README keeps a short summary.
 
 ## [0.1.0] - 2026-10-09
 
@@ -28,5 +32,6 @@ All notable changes to this repository are documented here. Versions follow [Sem
 - README reorganised product-first (problem, install, demo, limits, security, roadmap); the E3-001 protocol, authority boundary and history follow below, unchanged in substance.
 - `PROTOCOL.md` states that `scripts/run_s001a_foreign_replay.py` is not published in this repository.
 
-[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0
