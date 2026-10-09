@@ -143,3 +143,10 @@ footer.dark a { color: var(--brass-light); }
 .status.ERROR { background: #6b5a1f; }
 /* The hidden attribute must win over component display rules (e.g. .result is flex). */
 [hidden] { display: none !important; }
+/* Guided / advanced switch. */
+.mode-text { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.mode { display: inline-flex; border: 1px solid #c6ccc0; border-radius: 8px; overflow: hidden; background: var(--surface); }
+.mode-btn { min-height: 44px; padding: 0 18px; border: 0; background: transparent; color: var(--ink); font: 600 14px var(--body); cursor: pointer; }
+.mode-btn[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.mode-btn:disabled { opacity: .55; cursor: not-allowed; }
+.phases h2 .hint { font: 400 14px var(--body); margin-left: 8px; }

@@ -114,8 +114,21 @@
     </dl>
   </section>
 
-  <div id="phases" class="phases">
-  <h2>Qué se ha comprobado, fase a fase</h2>
+  <section class="card" aria-labelledby="mode-title">
+    <div class="row">
+      <div class="mode-text">
+        <h2 id="mode-title">Nivel de detalle</h2>
+        <p class="hint">Guiado: el resultado y su explicación. Avanzado: además, los datos exactos del verificador (hashes, manifiesto canónico, cada firma, umbral e informe JSON descargable). Los dos usan la misma verificación.</p>
+      </div>
+      <div class="mode" role="group" aria-label="Nivel de detalle">
+        <button type="button" class="mode-btn" id="modeGuided" aria-pressed="true" aria-controls="phases">Guiado</button>
+        <button type="button" class="mode-btn" id="modeAdvanced" aria-pressed="false" aria-controls="phases">Avanzado</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="phases" class="phases" hidden>
+  <h2>Qué se ha comprobado, fase a fase <span class="hint">datos exactos del verificador</span></h2>
 
   <article class="card">
     <div class="phase-head"><h3><span class="num">01</span>Integridad de cada fichero (SHA-256)</h3><span class="pill" id="p1">pendiente</span></div>
@@ -135,6 +148,7 @@
   <article class="card">
     <div class="phase-head"><h3><span class="num">03</span>Firmas Ed25519</h3><span class="pill" id="p3">pendiente</span></div>
     <div class="sig-grid" id="sigs"></div>
+    <p class="body-2" id="threshold"></p>
   </article>
 
   <article class="card">
@@ -144,8 +158,9 @@
   </article>
 
   <article class="card">
-    <div class="phase-head"><h3><span class="num">05</span>Informe JSON, como el del CLI</h3><button class="btn secondary" type="button" id="copy">Copiar JSON</button></div>
+    <div class="phase-head"><h3><span class="num">05</span>Informe JSON, como el del CLI</h3><div class="chips"><button class="btn secondary" type="button" id="copy">Copiar JSON</button><button class="btn" type="button" id="download">Descargar e3bundle-report.json</button></div></div>
     <pre class="terminal" id="report"></pre>
+    <p class="hint">El fichero contiene solo este informe: ni claves privadas, ni el contenido de tus ficheros, ni datos de tu equipo. Se genera en tu navegador.</p>
   </article>
   </div>
 

@@ -45,7 +45,9 @@ test.describe('verify page', () => {
     const w = await watch(page);
     await openVerify(page);
     await expect(page.locator('#exit')).toHaveText('exit 0');
-    await expect(page.locator('#phases')).toBeVisible();
+    // Guided is the default: the exact verifier data stays behind the advanced switch.
+    await expect(page.locator('#phases')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Guiado', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await noViolations(page, w);
   });
 
@@ -97,6 +99,7 @@ test.describe('unreadable input is ERROR, never VERIFIED', () => {
       await expect(page.locator('#findings')).toContainText(finding);
       await expect(page.locator('#phases')).toBeHidden();
       await expect(page.getByRole('button', { name: 'Verificar ahora' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Avanzado', exact: true })).toBeDisabled();
       await expect(page.locator('#status')).not.toHaveText('VERIFIED');
     });
   }
@@ -149,6 +152,9 @@ test.describe('privacy: nothing leaves the page', () => {
     await expect(page.locator('#status')).toHaveText('FAILED');
     await page.getByRole('button', { name: 'Reiniciar sesión' }).click();
     await expect(page.locator('#status')).toHaveText('VERIFIED');
+    await page.getByRole('button', { name: 'Avanzado', exact: true }).click();
+    await expect(page.locator('#phases')).toBeVisible();
+    await page.getByRole('button', { name: 'Guiado', exact: true }).click();
     const origin = new URL(baseURL).origin;
     for (const r of w.requests) {
       expect(new URL(r.url).origin, r.url).toBe(origin);
@@ -212,13 +218,69 @@ test.describe('keyboard and accessibility', () => {
   });
 });
 
+test.describe('advanced mode', () => {
+  test('switch, deep link and back', async ({ page }) => {
+    const w = await watch(page);
+    await openVerify(page);
+    await page.getByRole('button', { name: 'Avanzado', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Avanzado', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#phases')).toBeVisible();
+    await expect(page).toHaveURL(/#avanzado$/);
+    await page.getByRole('button', { name: 'Guiado', exact: true }).click();
+    await expect(page.locator('#phases')).toBeHidden();
+    await expect(page).not.toHaveURL(/#avanzado/);
+    await page.goto('index.html#avanzado');
+    await page.reload();
+    await expect(page.locator('#status')).toHaveText('VERIFIED');
+    await expect(page.locator('#phases')).toBeVisible();
+    await noViolations(page, w);
+  });
+
+  test('each signature answers four separate questions; threshold counted', async ({ page }) => {
+    await page.goto('index.html#avanzado');
+    await expect(page.locator('#status')).toHaveText('VERIFIED');
+    await page.getByRole('button', { name: 'Una clave sin fijar', exact: true }).click();
+    await expect(page.locator('#status')).toHaveText('FAILED');
+    const reviewer = page.locator('#sigs .sig', { hasText: 'example-reviewer' });
+    await expect(reviewer).toContainText('Firma criptográfica: válida');
+    await expect(reviewer).toContainText('Firmó este manifiesto: sí');
+    await expect(reviewer).toContainText('Clave fijada por ti: no');
+    await expect(reviewer).toContainText('Cuenta para el umbral: no');
+    await expect(page.locator('#threshold')).toContainText('Cuentan 1 de 2 exigidas');
+    await page.getByRole('button', { name: 'Sin claves fijadas', exact: true }).click();
+    await expect(reviewer).toContainText('Clave fijada por ti: no comprobado');
+    await expect(page.locator('#threshold')).toContainText('Cuentan 2 de 2 exigidas');
+  });
+
+  test('downloads the JSON report built in the page', async ({ page }) => {
+    await page.goto('index.html#avanzado');
+    await expect(page.locator('#status')).toHaveText('VERIFIED');
+    await page.getByRole('button', { name: 'Cambiar una temperatura', exact: true }).click();
+    await expect(page.locator('#status')).toHaveText('FAILED');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Descargar e3bundle-report.json' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('e3bundle-report.json');
+    const fs = await import('node:fs');
+    const text = fs.readFileSync(await download.path(), 'utf-8');
+    const report = JSON.parse(text);
+    expect(report.status).toBe('FAILED');
+    expect(report.findings).toContain('hash mismatch: data/readings.csv');
+    expect(report.limitations).toMatch(/^Checks integrity of declared files/);
+    expect(text.trimEnd()).toBe((await page.locator('#report').textContent()).trimEnd());
+    expect(text).not.toMatch(/private|signature_b64|temperature_c/);
+  });
+});
+
 test.describe('no horizontal overflow', () => {
   for (const width of [375, 768, 1440]) {
-    for (const file of ['index.html', 'crear.html']) {
+    for (const file of ['index.html', 'index.html#avanzado', 'crear.html']) {
       test(`${file} at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(file);
         await page.waitForLoadState('networkidle');
+        if (file.startsWith('index')) await expect(page.locator('#status')).toHaveText('VERIFIED');
         const [sw, cw] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
         expect(sw, `scrollWidth ${sw} > clientWidth ${cw}`).toBeLessThanOrEqual(cw);
       });

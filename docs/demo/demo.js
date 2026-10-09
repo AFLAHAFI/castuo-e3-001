@@ -151,8 +151,16 @@
       head.append(el('span', { class: 'mono' }, s.signer), el('span', { class: 'hint' }, 'rol: ' + s.role));
       const l1 = el('span', {}, 'Firma criptográfica: '); l1.append(el('span', { class: s.signatureOk ? 'yes' : 'no' }, s.signatureOk ? 'válida' : 'inválida'));
       const l2 = el('span', {}, 'Firmó este manifiesto: '); l2.append(el('span', { class: s.hashOk ? 'yes' : 'no' }, s.hashOk ? 'sí' : 'no, firmó otra versión'));
-      card.append(head, l1, l2); sg.append(card);
+      const l3 = el('span', {}, 'Clave fijada por ti: ');
+      if (!inp.trusted) l3.append(el('span', { class: 'maybe' }, 'no comprobado (sin claves fijadas)'));
+      else if (!s.counted) l3.append(el('span', { class: 'no' }, 'no aplica: la firma no es válida'));
+      else l3.append(el('span', { class: s.trusted ? 'yes' : 'no' }, s.trusted ? 'sí' : 'no'));
+      const counts = inp.trusted ? s.trusted === true : s.counted;
+      const l4 = el('span', {}, 'Cuenta para el umbral: '); l4.append(el('span', { class: counts ? 'yes' : 'no' }, counts ? 'sí' : 'no'));
+      card.append(head, l1, l2, l3, l4); sg.append(card);
     }
+    $('threshold').textContent = `Cuentan ${counted} de ${rep.min_signatures} exigidas (--min-signatures ${rep.min_signatures}): ` +
+      (inp.trusted ? 'solo firmas válidas hechas con una clave que has fijado.' : 'firmas válidas; sin claves fijadas no se comprueba quién firmó.');
     setPill('p3', r.phases.signatures.every((s) => s.signatureOk && s.hashOk) ? 'ok' : 'bad', r.phases.signatures.every((s) => s.signatureOk && s.hashOk) ? 'correcto' : 'fallo detectado');
 
     const tl = $('trust'); tl.replaceChildren();
@@ -169,7 +177,8 @@
     const trustOk = inp.trusted && r.phases.signatures.every((s) => s.trusted);
     setPill('p4', !inp.trusted ? 'warn' : (trustOk ? 'ok' : 'bad'), !inp.trusted ? 'no comprobada' : (trustOk ? 'correcto' : 'fallo detectado'));
 
-    $('report').textContent = JSON.stringify(rep, Object.keys(rep).sort(), 2);
+    lastReport = withLimitations(rep);
+    $('report').textContent = reportText();
     const original = dec.decode(data.files['data/readings.csv']);
     $('csvNote').textContent = edited ? 'Has editado el fichero: el resultado de arriba usa tu versión.' : ($('csv').value === original ? 'Contenido idéntico al firmado en v0.1.1.' : 'Este contenido es distinto del que se firmó.');
   }
@@ -187,9 +196,35 @@
     }
   }
 
+  // The CLI adds this text to every JSON report; the browser report carries it too.
+  const LIMITATIONS = 'Checks integrity of declared files and validity of signatures over the manifest only. ' +
+    'Does not prove the content is true, signer identity without pinned keys, signer independence, ' +
+    'certification, compliance or production authorization.';
+  const withLimitations = (rep) => Object.assign({}, rep, { limitations: LIMITATIONS });
+  // Same layout as the CLI: sorted keys, two-space indent.
+  const reportText = () => JSON.stringify(lastReport, Object.keys(lastReport).sort(), 2);
+
+  // Guided shows the result and its explanation; advanced adds the verifier's exact data.
+  let mode = location.hash === '#avanzado' ? 'advanced' : 'guided';
+  function applyMode() {
+    const advanced = mode === 'advanced';
+    $('modeGuided').setAttribute('aria-pressed', String(!advanced));
+    $('modeAdvanced').setAttribute('aria-pressed', String(advanced));
+    $('phases').hidden = !advanced || !!data.inputError;
+    history.replaceState(null, '', advanced ? '#avanzado' : location.pathname + location.search);
+  }
+
+  // The report is built in the page and saved through a local blob: URL; nothing is uploaded.
+  function downloadReport() {
+    const url = URL.createObjectURL(new Blob([reportText() + '\n'], { type: 'application/json' }));
+    const a = el('a', { href: url, download: 'e3bundle-report.json' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   // Input could not be read: no cryptographic check ran, so no phase is shown and nothing can be VERIFIED.
   function renderInputError(err) {
-    lastReport = err.report;
+    lastReport = withLimitations(err.report);
     $('status').textContent = 'ERROR'; $('status').className = 'status ERROR';
     $('exit').textContent = 'exit ' + err.exitCode;
     $('timing').textContent = 'La verificación no ha empezado.';
@@ -200,8 +235,8 @@
     $('next').textContent = 'Comprueba que manifest.json y el fichero de claves son JSON válidos y tienen la forma esperada. Con el CLI obtendrías el mismo ERROR (exit 2).';
     $('phases').hidden = true;
     $('scenarioHelp').textContent = 'No se pueden ejecutar escenarios sin un paquete legible.';
-    $('report').textContent = JSON.stringify(err.report, null, 2);
-    ['run', 'csv'].forEach((id) => { $(id).disabled = true; });
+    $('report').textContent = reportText();
+    ['run', 'csv', 'modeGuided', 'modeAdvanced'].forEach((id) => { $(id).disabled = true; });
     $('scenarios').replaceChildren();
   }
 
@@ -217,13 +252,17 @@
     if (!(window.crypto && window.crypto.subtle)) { $('unsupported').hidden = false; return; }
     if (!(await E3.ed25519Supported())) $('unsupported').hidden = false;
     try { await load(); } catch (e) { $('loadError').hidden = false; return; }
-    if (data.inputError) { renderInputError(data.inputError); return; }
+    $('modeGuided').addEventListener('click', () => { mode = 'guided'; applyMode(); });
+    $('modeAdvanced').addEventListener('click', () => { mode = 'advanced'; applyMode(); });
+    if (data.inputError) { renderInputError(data.inputError); applyMode(); return; }
+    applyMode();
     $('reset').addEventListener('click', reset);
+    $('download').addEventListener('click', downloadReport);
     $('csv').value = dec.decode(data.files['data/readings.csv']);
     $('csv').addEventListener('input', () => { edited = true; renderScenarios(); $('scenarioHelp').textContent = EDITED_HELP; $('csvNote').textContent = 'Has editado el fichero. Pulsa «Verificar ahora».'; });
     $('run').addEventListener('click', run);
     $('copy').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(JSON.stringify(lastReport, Object.keys(lastReport).sort(), 2)); $('copy').textContent = 'Copiado'; }
+      try { await navigator.clipboard.writeText(reportText()); $('copy').textContent = 'Copiado'; }
       catch (e) { $('copy').textContent = 'Selecciona y copia el texto'; }
     });
     renderScenarios();
