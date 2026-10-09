@@ -22,7 +22,7 @@ python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.0"
 e3bundle --help
 ```
 
-Python 3.11 or newer. Latest release: [v0.1.0](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
+Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.0](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
 
 ## 30-second demo
 

@@ -10,6 +10,7 @@ permissions:
   contents: read
 
 jobs:
+  # Preserve the required branch-protection check names: tests (3.11/3.12/3.13).
   tests:
     runs-on: ubuntu-latest
     strategy:
@@ -69,6 +70,76 @@ jobs:
           python -c "import json; k=json.load(open('keys/alice.pub.json')); json.dump({k['signer_id']: k['public_key_b64']}, open('trusted.json','w'))"
           python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json
           printf 't,value\n0,99.9\n' > bundle/readings.csv
+          if python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json; then
+            echo "tampered bundle was accepted" >&2
+            exit 1
+          fi
+
+  # Additional platform coverage without renaming the three required Ubuntu checks.
+  cross-platform:
+    name: cross-platform (${{ matrix.os }}, ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt pytest
+      - name: Unit tests
+        run: python -m pytest tests -v
+      - name: S-001A synthetic demo must never qualify for G2
+        run: |
+          python examples/make_demo_bundle.py demo/ok
+          python scripts/validate_external_evidence_bundle.py demo/ok --output demo/ok-validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("demo/ok-validation.json").read_text(encoding="utf-8"))
+          assert report["status"] == "DEMO_VALIDATED", report
+          assert report["mode"] == "DEMO_ONLY", report
+          assert report["g2_eligible"] is False, report
+          assert report["claim_boundary"] == "DEMO_ONLY", report
+          assert report["oneR"] is False and report["oneV"] is False, report
+          assert report["oneA"] is False and report["promotion"] == "BLOCKED", report
+          PY
+          if python scripts/evaluate_g2.py demo/ok-validation.json --output demo/ok-g2.json; then
+            echo "demo-only bundle incorrectly passed G2" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          decision = json.loads(Path("demo/ok-g2.json").read_text(encoding="utf-8"))
+          assert decision["status"] == "BLOCKED", decision
+          assert decision["staging_handoff_eligible"] is False, decision
+          assert decision["promotion"] == "BLOCKED", decision
+          PY
+          python examples/make_demo_bundle.py demo/bad --tamper result
+          if python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-validation.json; then
+            echo "tampered demo bundle was accepted" >&2
+            exit 1
+          fi
+      - name: e3bundle quickstart (sign, verify, tamper must fail)
+        run: |
+          mkdir -p keys bundle
+          printf 't,value\\n0,21.5\\n' > bundle/readings.csv
+          python scripts/e3bundle.py keygen --private-key keys/alice.key --signer-id alice
+          python scripts/e3bundle.py manifest bundle --bundle-id ci-smoke
+          python scripts/e3bundle.py sign bundle --private-key keys/alice.key --signer-id alice --role reviewer
+          python -c "import json; k=json.load(open('keys/alice.pub.json')); json.dump({k['signer_id']: k['public_key_b64']}, open('trusted.json','w'))"
+          python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json
+          printf 't,value\\n0,99.9\\n' > bundle/readings.csv
           if python scripts/e3bundle.py verify bundle --min-signatures 1 --trusted-keys trusted.json; then
             echo "tampered bundle was accepted" >&2
             exit 1

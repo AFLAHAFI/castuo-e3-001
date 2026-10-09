@@ -45,7 +45,7 @@ python -m pip install -e . pytest
 python -m pytest tests -v
 ```
 
-Tests run on Linux in CI (Python 3.11, 3.12 and 3.13); that run is the reference result. Tests that need symlinks are skipped where the platform does not allow them.
+The unit and CLI test job runs on Ubuntu, macOS and Windows with Python 3.11, 3.12 and 3.13. The composite GitHub Action and clean-wheel packaging smoke remain on Ubuntu. Symlink tests skip only when the current runner cannot create them; other platform-specific failures must be investigated, not waived.
 
 The S-001A validator's synthetic demo is expected to report `DEMO_VALIDATED`, never `VERIFIED_FOR_G2`, and the G2 evaluator must block it. That is an intentional assurance boundary, not a failing test.
 
@@ -69,7 +69,7 @@ AI tools may be used to draft code, tests and documentation. The rules are the s
 - Say in the pull request description if a substantial part was AI-generated.
 - Generated text must not add claims (certification, validation, adoption, performance) that the repository does not evidence.
 
-The maintainer reviews and approves every merge; no AI tool merges or approves changes. Linux CI on the latest commit of the pull request is the reference check.
+The maintainer reviews and approves every merge; no AI tool merges or approves changes. CI on the latest pull-request commit is the reference check, including every OS/Python matrix entry; failures must be investigated rather than bypassed.
 
 ## Recognition
 
