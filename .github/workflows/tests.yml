@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt pytest
+      - name: Unit tests
+        run: python -m pytest tests -v
+      - name: README quickstart (valid demo must pass, tampered demo must fail)
+        run: |
+          python examples/make_demo_bundle.py demo/ok
+          python scripts/validate_external_evidence_bundle.py demo/ok --output demo/ok-validation.json
+          python examples/make_demo_bundle.py demo/bad --tamper result
+          if python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-validation.json; then
+            echo "tampered demo bundle was accepted" >&2
+            exit 1
+          fi

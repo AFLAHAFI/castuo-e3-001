@@ -78,6 +78,28 @@ python3 scripts/evaluate_g2.py \
   --output g2-decision.json
 ```
 
+## Try the validator (synthetic demo)
+
+Requires Python 3.11+.
+
+```bash
+python -m pip install -r requirements.txt
+
+# Build a valid synthetic bundle and validate it (exit code 0)
+python examples/make_demo_bundle.py demo/ok
+python scripts/validate_external_evidence_bundle.py demo/ok --output demo/ok-validation.json
+
+# Build a tampered bundle and watch it fail (exit code 1, findings listed)
+python examples/make_demo_bundle.py demo/bad --tamper result
+python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-validation.json
+```
+
+Available `--tamper` modes: `result`, `fixture`, `attestation-signature`, `reviewer-signature`, `reviewer-quorum`, `reviewer-duplicate`, `local-runner`, `production-claim`, `missing-envelope`.
+
+> **The demo bundle is not evidence.** Its keys are generated in memory and discarded, its runner and reviewers are fictional `DEMO-*` identities, and it contains no S-001A replay. The validator will report `VERIFIED_FOR_G2` for it because it checks hashes, signatures and declared predicates — not who signed. A passing demo shows that the validator works; it says nothing about CASTÚO-SYSTEM.
+
+Run the test suite with `python -m pytest tests` (or `python -m unittest discover tests`).
+
 The validator requires the bundle to contain a frozen manifest, fixture, replay result, evidence envelope, runner attestation and signed reviewer quorum. Private keys never belong in this repository.
 
 ## Current state

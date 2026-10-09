@@ -35,6 +35,8 @@ python3 scripts/run_s001a_foreign_replay.py \
   --stress-repetitions 3
 ```
 
+> **Availability:** `scripts/run_s001a_foreign_replay.py` is not published in this repository. The replay harness is supplied to the independent runner together with the frozen package; until it is published, this step cannot be reproduced from a clean clone of this repository alone. To try the validator without a replay, see *Try the validator* in `README.md`.
+
 The replay must show PASS_WITHIN_DECLARED_SCOPE, deterministic equivalent decisions and equivalent evidence semantics, recovery completion, negative behavior and an unchanged claim firewall.
 
 ## 3. Runner attestation
