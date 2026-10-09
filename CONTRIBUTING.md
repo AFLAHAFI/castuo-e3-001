@@ -52,10 +52,12 @@ To run the browser demo checks locally (Node 22, Python 3.11+): assemble the sit
 ```bash
 node docs/demo/tests/conformance.mjs <bundles> python <e3bundle.py>         # 8 scenarios vs the released CLI
 node docs/demo/tests/input-conformance.mjs <bundles> python <e3bundle.py>   # malformed inputs vs the CLI
-cd docs/demo/tests/ui && npm ci && npx playwright install chromium firefox webkit && npx playwright test
+node docs/demo/tests/importer.mjs                                           # local-import rules
+cd docs/demo/tests/ui && npm ci && npx playwright install chromium firefox webkit
+E3_CLI=<e3bundle.py> npx playwright test                                    # UI suite; local folders compared with the CLI
 ```
 
-`<bundles>` and `<e3bundle.py>` come from the release tag (`git archive v0.1.1 examples/bundles scripts/e3bundle.py`). CI runs the same steps on Linux.
+`<bundles>` and `<e3bundle.py>` come from the release tag (`git archive v0.1.1 examples/bundles scripts/e3bundle.py`). Without `E3_CLI`, the local-folder tests still run but skip the CLI comparison (noted in the report). `E3_BASE_URL=https://traky12.github.io/castuo-e3-001/` runs the suite against the published site. CI runs the same steps on Linux; Playwright's WebKit build does not start on some Windows hosts (missing system DLLs), so run Chromium and Firefox locally there and rely on CI for WebKit. WebKit is not Safari: manual checks in Safari, Edge and mobile browsers are still welcome as reproduction reports.
 
 To build and smoke-test the container image locally:
 

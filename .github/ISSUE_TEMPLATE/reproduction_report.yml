@@ -18,6 +18,7 @@ body:
         - Browser demo (traky12.github.io/castuo-e3-001)
         - Both CLI and browser demo
         - My own bundle (CLI)
+        - My own bundle (browser, paquete.html)
         - S-001A synthetic demo (examples/make_demo_bundle.py)
     validations:
       required: true
