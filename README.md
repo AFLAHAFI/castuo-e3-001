@@ -149,6 +149,21 @@ Changes are recorded in [CHANGELOG.md](CHANGELOG.md). Contributions, bug reports
 
 Start in 10 minutes, improve the project in an hour, or become an independent E3-001 reviewer: see the contribution levels in [CONTRIBUTING.md](CONTRIBUTING.md). Questions: [SUPPORT.md](SUPPORT.md). Decisions and AI-assisted development: [GOVERNANCE.md](GOVERNANCE.md). Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Thanks to everyone in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
+### What we need now
+
+Targets for Phase 1 of the [public adoption plan](docs/PUBLIC_ADOPTION_PLAN.md), not achievements. Counts as of 2026-10-10, each checkable from the linked source:
+
+| Target | Now | Source |
+|---|---|---|
+| Independent reproductions (CLI path) | 0 / 5 | [#30](https://github.com/Traky12/castuo-e3-001/issues/30), label [`tester-report`](https://github.com/Traky12/castuo-e3-001/labels/tester-report) |
+| Merged pull requests from external contributors | 1 / 3 | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
+| Signed independent E3-001 reviews | 0 / 2 | [PROTOCOL.md](PROTOCOL.md) |
+| Known uses of the GitHub Action outside this repository | 0 / 2 | open a [Discussion](https://github.com/Traky12/castuo-e3-001/discussions) to report one |
+
+Scoped tasks: [`good first issue`](https://github.com/Traky12/castuo-e3-001/labels/good%20first%20issue) · [`help wanted`](https://github.com/Traky12/castuo-e3-001/labels/help%20wanted) · [`documentation`](https://github.com/Traky12/castuo-e3-001/labels/documentation) · [`testing`](https://github.com/Traky12/castuo-e3-001/labels/testing).
+
+Every change goes through a pull request with public review and automated tests; changes without context, a test or a reason are not merged. An accepted contribution or a successful reproduction is not a validation, certification or institutional endorsement of the project.
+
 ---
 
 ## E3-001 protocol
