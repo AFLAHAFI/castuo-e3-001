@@ -4,7 +4,7 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-10-09
+**Candidate package version:** `0.1.1` (not tagged or released yet).
 
 ### Added
 - `e3bundle verify --format text`: human-readable summary on stdout; JSON stays the default, `--output` always writes JSON, exit codes unchanged. Without `--trusted-keys` the summary says `trust not checked`. Contributed by @AFLAHAFI (#32, closes #27).
@@ -32,6 +32,5 @@ All notable changes to this repository are documented here. Versions follow [Sem
 - README reorganised product-first (problem, install, demo, limits, security, roadmap); the E3-001 protocol, authority boundary and history follow below, unchanged in substance.
 - `PROTOCOL.md` states that `scripts/run_s001a_foreign_replay.py` is not published in this repository.
 
-[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0
