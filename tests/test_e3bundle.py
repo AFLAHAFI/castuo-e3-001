@@ -229,12 +229,26 @@ class E3BundleTests(unittest.TestCase):
             self.skipTest(f"symlinks unavailable: {exc}")
         self.assert_failed("symlink not allowed: report.txt")
 
+    def test_extra_symlink_is_rejected_even_when_extra_files_are_allowed(self):
+        target = self.root / "extra-target.txt"
+        target.write_text("outside bundle\\n", encoding="utf-8")
+        link = self.bundle / "extra-link.txt"
+        try:
+            link.symlink_to(target)
+        except OSError as exc:
+            self.skipTest(f"symlinks unavailable: {exc}")
+        code, report = self.verify("--allow-extra")
+        self.assertEqual(code, 1, report)
+        self.assertTrue(
+            any("symlinks are not allowed in a bundle: extra-link.txt" in x for x in report["findings"]),
+            report["findings"],
+        )
+
     def test_manifest_refuses_to_overwrite_signed_bundle(self):
         self.sign("alice")
         proc = run("manifest", self.bundle, "--bundle-id", "demo-002")
         self.assertEqual(proc.returncode, 2)
         self.assertIn("would invalidate", proc.stderr)
-
 
     def test_negative_min_signatures_is_an_input_error(self):
         for output_format in ("json", "text"):
@@ -248,7 +262,10 @@ class E3BundleTests(unittest.TestCase):
                 if output_format == "json":
                     report = json.loads(proc.stdout)
                     self.assertEqual(report["status"], "ERROR")
-                    self.assertTrue(any("--min-signatures must be >= 0" in x for x in report["findings"]))
+                    self.assertTrue(
+                        any("--min-signatures must be >= 0" in x for x in report["findings"]),
+                        report["findings"],
+                    )
                 else:
                     self.assertEqual(
                         proc.stdout,
@@ -262,6 +279,7 @@ class E3BundleTests(unittest.TestCase):
             "data/./readings.csv",
             "report.txt/",
             "./manifest.json",
+            "\\x00bad",
         )
         manifest_path = self.bundle / "manifest.json"
         for unsafe_path in unsafe_paths:
@@ -293,6 +311,8 @@ class E3BundleTests(unittest.TestCase):
             if path.is_file()
         }
         self.assertEqual(before, after)
+
+
 
 if __name__ == "__main__":
     unittest.main()
