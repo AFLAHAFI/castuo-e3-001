@@ -27,10 +27,33 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt pytest
       - name: Unit tests
         run: python -m pytest tests -v
-      - name: README quickstart (valid demo must pass, tampered demo must fail)
+      - name: S-001A synthetic demo must never qualify for G2
         run: |
           python examples/make_demo_bundle.py demo/ok
           python scripts/validate_external_evidence_bundle.py demo/ok --output demo/ok-validation.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("demo/ok-validation.json").read_text(encoding="utf-8"))
+          assert report["status"] == "DEMO_VALIDATED", report
+          assert report["mode"] == "DEMO_ONLY", report
+          assert report["g2_eligible"] is False, report
+          assert report["claim_boundary"] == "DEMO_ONLY", report
+          assert report["oneR"] is False and report["oneV"] is False, report
+          assert report["oneA"] is False and report["promotion"] == "BLOCKED", report
+          PY
+          if python scripts/evaluate_g2.py demo/ok-validation.json --output demo/ok-g2.json; then
+            echo "demo-only bundle incorrectly passed G2" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          decision = json.loads(Path("demo/ok-g2.json").read_text(encoding="utf-8"))
+          assert decision["status"] == "BLOCKED", decision
+          assert decision["staging_handoff_eligible"] is False, decision
+          assert decision["promotion"] == "BLOCKED", decision
+          PY
           python examples/make_demo_bundle.py demo/bad --tamper result
           if python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-validation.json; then
             echo "tampered demo bundle was accepted" >&2

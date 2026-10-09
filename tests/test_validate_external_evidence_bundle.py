@@ -28,15 +28,26 @@ class ValidateExternalEvidenceBundleTests(unittest.TestCase):
         code, payload = run(VALIDATOR, bundle, "--min-reviewers", 2, "--output", report)
         return code, payload, report
 
-    def test_valid_demo_bundle_verifies_and_g2_stays_blocked_for_promotion(self):
+    def test_valid_demo_is_not_external_evidence_and_g2_blocks_it(self):
         code, payload, report = self.validate(None)
         self.assertEqual(code, 0, payload["findings"])
-        self.assertEqual(payload["status"], "VERIFIED_FOR_G2")
+        self.assertEqual(payload["status"], "DEMO_VALIDATED")
+        self.assertEqual(payload["mode"], "DEMO_ONLY")
+        self.assertFalse(payload["g2_eligible"])
+        self.assertFalse(payload["foreign_replay_verified"])
+        self.assertFalse(payload["human_review_verified"])
+        self.assertFalse(payload["oneR"])
+        self.assertFalse(payload["oneV"])
         self.assertFalse(payload["oneA"])
+        self.assertEqual(payload["promotion"], "BLOCKED")
+        self.assertEqual(payload["claim_boundary"], "DEMO_ONLY")
+
         g2_code, decision = run(G2, report, "--output", report.with_name("g2.json"))
-        self.assertEqual(g2_code, 0)
-        self.assertEqual(decision["status"], "PASS")
+        self.assertEqual(g2_code, 1)
+        self.assertEqual(decision["status"], "BLOCKED")
+        self.assertFalse(decision["staging_handoff_eligible"])
         self.assertEqual(decision["promotion"], "BLOCKED")
+        self.assertTrue(any("demo-only" in finding for finding in decision["findings"]))
 
     def assert_blocked(self, tamper: str, expected: str):
         code, payload, _ = self.validate(tamper)

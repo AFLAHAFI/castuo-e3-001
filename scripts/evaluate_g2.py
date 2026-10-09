@@ -18,6 +18,10 @@ def main() -> int:
     except (OSError, json.JSONDecodeError) as exc:
         findings.append(f"unreadable external validation: {exc}")
         payload = {}
+    if payload.get("mode") == "DEMO_ONLY" or payload.get("claim_boundary") == "DEMO_ONLY":
+        findings.append("demo-only validation is not eligible for G2")
+    if payload.get("g2_eligible") is False:
+        findings.append("validation output explicitly marks G2 eligibility false")
     if payload.get("status") != "VERIFIED_FOR_G2":
         findings.append("external evidence is not VERIFIED_FOR_G2")
     if payload.get("foreign_replay_verified") is not True:

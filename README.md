@@ -96,7 +96,7 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). The
 - Detached signature export and key rotation guidance.
 - Optional RFC 3161 timestamping.
 
-Changes are recorded in [CHANGELOG.md](CHANGELOG.md). Contributions, bug reports and *reproduction reports* are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+Changes are recorded in [CHANGELOG.md](CHANGELOG.md). Contributions, bug reports and *reproduction reports* are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). The [public adoption roadmap](docs/PUBLIC_ADOPTION_PLAN.md) records tester-first milestones and community work.
 
 ---
 
@@ -149,7 +149,7 @@ python scripts/validate_external_evidence_bundle.py demo/bad --output demo/bad-v
 
 `--tamper` modes: `result`, `fixture`, `attestation-signature`, `reviewer-signature`, `reviewer-quorum`, `reviewer-duplicate`, `local-runner`, `production-claim`, `missing-envelope`.
 
-> **The demo bundle is not evidence.** Its keys are generated in memory and discarded, its runner and reviewers are fictional `DEMO-*` identities, and it contains no S-001A replay. The validator reports `VERIFIED_FOR_G2` for it because it checks hashes, signatures and declared predicates — not who signed. A passing demo shows that the validator works; it says nothing about CASTÚO-SYSTEM.
+> **The demo bundle is not evidence.** Its keys are generated in memory and discarded, its runner and reviewers are fictional `DEMO-*` identities, and it contains no S-001A replay. The validator reports `DEMO_VALIDATED`, sets `g2_eligible: false`, and the G2 evaluator must return `BLOCKED`. A passing demo shows only that structural checks work; it says nothing about the independence or identity of a runner or reviewer, the truth of a claim, or CASTÚO-SYSTEM.
 
 ### Architectural identity
 

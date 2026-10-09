@@ -4,6 +4,10 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
+### Security and adoption
+- Synthetic S-001A demonstration bundles are explicitly labelled `DEMO_VALIDATED` and blocked from G2/staging eligibility; they cannot stand in for external replay or independent human review.
+- Added the public adoption roadmap and measurable tester-first milestones.
+
 ## [0.1.0] - 2026-10-09
 
 ### Added
