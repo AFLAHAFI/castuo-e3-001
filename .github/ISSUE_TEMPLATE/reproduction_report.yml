@@ -1,6 +1,6 @@
 name: Reproduction report
 description: You ran the e3bundle CLI or the browser demo — tell us how it went (adoption gate, #30)
-title: "[reproduction] <OS> · <path> · v0.1.1"
+title: "[reproduction] <OS> · <path> · v0.1.2"
 labels: [reproduction, needs-triage]
 body:
   - type: markdown
@@ -14,7 +14,7 @@ body:
       label: What did you test?
       description: CLI reports count toward the five-tester gate in #30; browser-only reports are recorded separately.
       options:
-        - CLI (released v0.1.1)
+        - CLI (released v0.1.2)
         - Browser demo (traky12.github.io/castuo-e3-001)
         - Both CLI and browser demo
         - My own bundle (CLI)
@@ -26,7 +26,7 @@ body:
     id: version
     attributes:
       label: Tested tag or commit
-      placeholder: v0.1.1
+      placeholder: v0.1.2
     validations:
       required: true
   - type: input

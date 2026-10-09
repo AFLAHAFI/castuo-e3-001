@@ -18,11 +18,11 @@ Test reports, datasets, audit exports and lab results are often shared as plain 
 ## Install
 
 ```bash
-python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.1"
+python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.2"
 e3bundle --help
 ```
 
-Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.1](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.1) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
+Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.2](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.2) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
 
 ## Try it in your browser
 
@@ -35,7 +35,7 @@ The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519
 No Python needed. Release images for `linux/amd64` and `linux/arm64` are published to GitHub Container Registry by the `container.yml` workflow, built from the release tag with an SBOM and build provenance:
 
 ```bash
-docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.1 \
+docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.2 \
   verify examples/bundles/valid --min-signatures 2 \
   --trusted-keys examples/bundles/trusted-keys.json --format text
 ```
@@ -43,7 +43,7 @@ docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.1 \
 The image runs as a non-root user with `/data` as its working directory and makes no network calls. For repeatable runs, pin the digest shown on the release page instead of the tag, and check where it was built:
 
 ```bash
-gh attestation verify oci://ghcr.io/traky12/e3bundle:0.1.1 --owner Traky12
+gh attestation verify oci://ghcr.io/traky12/e3bundle:0.1.2 --owner Traky12
 ```
 
 There is no `latest` tag while the project is alpha.
@@ -109,14 +109,14 @@ What `verify` detects: modified, missing and undeclared files; path traversal an
 ## Use it in GitHub Actions
 
 ```yaml
-- uses: Traky12/castuo-e3-001@38e3c20ee2f37e957f81ba6e1ead6d90bc8a0c9a # v0.1.1 alpha (exact release commit)
+- uses: Traky12/castuo-e3-001@50b2dde7309f147d39fbb1ac7e7fc9cf00310e4c # v0.1.2 alpha (exact release commit)
   with:
     bundle: evidence/release-42
     min-signatures: "2"
     trusted-keys: .github/trusted-keys.json
 ```
 
-For supply-chain safety, use the full commit SHA shown on the [release page](https://github.com/Traky12/castuo-e3-001/releases), not a moving tag. The SHA above is the commit behind the published `v0.1.1` alpha tag.
+For supply-chain safety, use the full commit SHA shown on the [release page](https://github.com/Traky12/castuo-e3-001/releases), not a moving tag. The SHA above is the commit behind the published `v0.1.2` alpha tag.
 
 The step writes the JSON report (`report-path`, default `e3bundle-report.json`), adds the findings to the job summary and fails when verification does not pass. Set `fail-on-error: "false"` to keep the job going and branch on the `status` output (`VERIFIED`, `FAILED` or `ERROR`) instead; GitHub does not expose outputs of a failed step.
 
