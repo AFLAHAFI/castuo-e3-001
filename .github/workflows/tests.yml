@@ -50,3 +50,64 @@ jobs:
             echo "tampered bundle was accepted" >&2
             exit 1
           fi
+
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Valid example must verify
+        id: valid
+        uses: ./
+        with:
+          bundle: examples/bundles/valid
+          min-signatures: "2"
+          trusted-keys: examples/bundles/trusted-keys.json
+          report-path: reports/valid.json
+      - name: Tampered example reports FAILED (fail-on-error false)
+        id: tampered
+        uses: ./
+        with:
+          bundle: examples/bundles/tampered
+          min-signatures: "2"
+          trusted-keys: examples/bundles/trusted-keys.json
+          report-path: reports/tampered.json
+          fail-on-error: "false"
+      - name: Tampered example fails the step by default
+        id: tampered_default
+        continue-on-error: true
+        uses: ./
+        with:
+          bundle: examples/bundles/tampered
+          min-signatures: "2"
+          trusted-keys: examples/bundles/trusted-keys.json
+          report-path: reports/tampered-default.json
+      - name: Assert outcomes
+        env:
+          VALID_STATUS: ${{ steps.valid.outputs.status }}
+          TAMPERED_STATUS: ${{ steps.tampered.outputs.status }}
+          DEFAULT_OUTCOME: ${{ steps.tampered_default.outcome }}
+        run: |
+          test "$VALID_STATUS" = VERIFIED
+          test "$TAMPERED_STATUS" = FAILED
+          test "$DEFAULT_OUTCOME" = failure
+          grep -q 'hash mismatch: data/readings.csv' reports/tampered.json
+          grep -q 'hash mismatch: data/readings.csv' reports/tampered-default.json
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel, install the wheel in a clean venv
+        run: |
+          python -m pip install --disable-pip-version-check build
+          python -m build
+          python -m venv /tmp/clean
+          /tmp/clean/bin/pip install --disable-pip-version-check dist/*.whl
+          cd /tmp
+          /tmp/clean/bin/e3bundle verify "$GITHUB_WORKSPACE/examples/bundles/valid" --min-signatures 2 --trusted-keys "$GITHUB_WORKSPACE/examples/bundles/trusted-keys.json"

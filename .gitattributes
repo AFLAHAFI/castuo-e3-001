@@ -1,0 +1,2 @@
+# Signed example bundles: hashes cover exact bytes, never convert line endings.
+examples/bundles/** -text

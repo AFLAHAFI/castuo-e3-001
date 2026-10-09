@@ -1,0 +1,14 @@
+{
+  "bundle_id": "example-001",
+  "files": [
+    {
+      "path": "data/readings.csv",
+      "sha256": "sha256:b34bf28a4614d0955cdab28a04207d5c5db90c60486024c7ed5d1ad7a59db76e"
+    },
+    {
+      "path": "report.md",
+      "sha256": "sha256:f8ced45800759e28c7689e56e0a365a60c64e79b1eae4af38d2c1f2cef046e71"
+    }
+  ],
+  "format": "e3.bundle.v1"
+}

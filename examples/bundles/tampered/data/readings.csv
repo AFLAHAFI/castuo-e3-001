@@ -1,0 +1,4 @@
+timestamp,zone,temperature_c,humidity_pct
+2026-01-01T08:00:00Z,zone1,18.4,71
+2026-01-01T09:00:00Z,zone1,19.1,68
+2026-01-01T10:00:00Z,zone1,23.0,64
