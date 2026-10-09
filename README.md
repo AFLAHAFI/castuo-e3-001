@@ -42,6 +42,22 @@ $ echo $?
 
 Both commands run in CI on every change, so this output is checked, not illustrative.
 
+For a human-readable summary, use `--format text` (available from the current
+source checkout; not included in v0.1.0):
+
+```console
+$ python scripts/e3bundle.py verify examples/bundles/tampered --min-signatures 2 --trusted-keys examples/bundles/trusted-keys.json --format text
+FAILED  example-001  files 1/2  signatures 2 trusted / 2 valid
+  - hash mismatch: data/readings.csv
+```
+
+JSON remains the default (`--format json`). `--format` changes stdout only:
+`--output reports/verification.json` still writes the full JSON verification
+report, including limitations, even with `--format text`. Exit codes are
+unchanged. Input errors print `ERROR` and its findings in the selected format;
+as before, they do not write an output file. Without `--trusted-keys`, the text
+summary says `trust not checked` rather than implying signer identity was verified.
+
 ## Use it on your own files
 
 ```bash

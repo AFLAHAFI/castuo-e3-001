@@ -286,6 +286,18 @@ def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, al
     }
 
 
+def format_text_report(report: dict[str, Any]) -> str:
+    summary = report["status"]
+    if report["status"] != "ERROR":
+        trusted = report["signatures_trusted"]
+        trust = "trust not checked" if trusted is None else f"{trusted} trusted"
+        summary += (
+            f"  {report['bundle_id']}  files {report['files_verified']}/{report['files_declared']}"
+            f"  signatures {trust} / {report['signatures_valid']} valid"
+        )
+    return "\n".join([summary, *[f"  - {finding}" for finding in report["findings"]]])
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     trusted = None
     if args.trusted_keys is not None:
@@ -297,7 +309,7 @@ def cmd_verify(args: argparse.Namespace) -> int:
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text + "\n", encoding="utf-8")
-    print(text)
+    print(format_text_report(report) if args.format == "text" else text)
     return 0 if report["status"] == "VERIFIED" else 1
 
 
@@ -328,6 +340,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--trusted-keys", type=Path, default=None, help="JSON {signer_id: public_key_b64}; only these keys count")
     check.add_argument("--allow-extra", action="store_true", help="do not fail on files absent from the manifest")
     check.add_argument("--output", type=Path, default=None, help="also write the JSON report to this path")
+    check.add_argument("--format", choices=("json", "text"), default="json", help="stdout format (default: json); --output always writes JSON")
     check.set_defaults(handler=cmd_verify)
     return parser
 
@@ -338,7 +351,8 @@ def main(argv: list[str] | None = None) -> int:
         return args.handler(args)
     except InputError as exc:
         if args.command == "verify":
-            print(json.dumps({"status": "ERROR", "findings": [str(exc)], "limitations": LIMITATIONS}, indent=2, sort_keys=True))
+            report = {"status": "ERROR", "findings": [str(exc)], "limitations": LIMITATIONS}
+            print(format_text_report(report) if args.format == "text" else json.dumps(report, indent=2, sort_keys=True))
         else:
             print(f"error: {exc}", file=sys.stderr)
         return 2

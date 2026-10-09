@@ -67,6 +67,79 @@ class E3BundleTests(unittest.TestCase):
         self.assertEqual(code, 0, report["findings"])
         self.assertEqual(report["signatures_trusted"], 2)
 
+    def test_verify_formats_preserve_json_report_and_exit_codes(self):
+        self.sign("alice")
+        self.sign("bob")
+        trusted = self.trusted("alice", "bob")
+        for tampered in (False, True):
+            with self.subTest(tampered=tampered):
+                if tampered:
+                    (self.bundle / "data" / "readings.csv").write_text("changed\n", encoding="utf-8")
+                args = ("verify", self.bundle, "--min-signatures", 2, "--trusted-keys", trusted)
+                default = run(*args)
+                explicit = run(*args, "--format", "json")
+                report = json.loads(default.stdout)
+                self.assertEqual(default.returncode, int(tampered))
+                self.assertEqual(explicit.returncode, default.returncode)
+                self.assertEqual(explicit.stdout, default.stdout)
+                self.assertEqual(default.stdout, json.dumps(report, indent=2, sort_keys=True) + "\n")
+                for output_format in ("json", "text"):
+                    output = self.root / "reports" / f"{output_format}.json"
+                    proc = run(*args, "--format", output_format, "--output", output)
+                    self.assertEqual(proc.returncode, default.returncode, proc.stderr)
+                    self.assertEqual(proc.stderr, "")
+                    self.assertEqual(output.read_text(encoding="utf-8"), default.stdout)
+                    if output_format == "json":
+                        self.assertEqual(proc.stdout, default.stdout)
+                    else:
+                        status = "FAILED" if tampered else "VERIFIED"
+                        count = 1 if tampered else 2
+                        expected = f"{status}  demo-001  files {count}/2  signatures 2 trusted / 2 valid\n"
+                        if tampered:
+                            expected += "  - hash mismatch: data/readings.csv\n"
+                        self.assertEqual(proc.stdout, expected)
+
+    def test_text_without_pinned_keys_does_not_claim_trust(self):
+        self.sign("alice")
+        proc = run("verify", self.bundle, "--format", "text")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout, "VERIFIED  demo-001  files 2/2  signatures trust not checked / 1 valid\n")
+
+    def test_text_lists_all_findings_and_distinguishes_untrusted_keys(self):
+        self.sign("alice")
+        self.sign("bob")
+        args = ("verify", self.bundle, "--min-signatures", 2, "--trusted-keys", self.trusted("alice"))
+        report = json.loads(run(*args).stdout)
+        proc = run(*args, "--format", "text")
+        self.assertEqual(proc.returncode, 1)
+        self.assertEqual(proc.stdout.splitlines(), [
+            "FAILED  demo-001  files 2/2  signatures 1 trusted / 2 valid",
+            *[f"  - {finding}" for finding in report["findings"]],
+        ])
+
+    def test_input_error_in_both_formats_preserves_exit_and_output_behavior(self):
+        (self.bundle / "manifest.json").write_text("{not json", encoding="utf-8")
+        default = run("verify", self.bundle)
+        report = json.loads(default.stdout)
+        for output_format in ("json", "text"):
+            with self.subTest(output_format=output_format):
+                output = self.root / "error.json"
+                proc = run("verify", self.bundle, "--format", output_format, "--output", output)
+                self.assertEqual(proc.returncode, 2)
+                self.assertEqual(proc.stderr, "")
+                # Input errors did not write --output before this change.
+                self.assertFalse(output.exists())
+                expected = default.stdout if output_format == "json" else (
+                    "ERROR\n" + "".join(f"  - {finding}\n" for finding in report["findings"])
+                )
+                self.assertEqual(proc.stdout, expected)
+
+    def test_invalid_output_format_is_a_usage_error(self):
+        proc = run("verify", self.bundle, "--format", "yaml")
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.stdout, "")
+        self.assertIn("invalid choice", proc.stderr)
+
     def test_modified_file_is_detected(self):
         (self.bundle / "data" / "readings.csv").write_text("t,value\n0,99.9\n", encoding="utf-8")
         self.assert_failed("hash mismatch: data/readings.csv")
