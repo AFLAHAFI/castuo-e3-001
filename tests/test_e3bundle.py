@@ -53,6 +53,65 @@ class E3BundleTests(unittest.TestCase):
         self.assertEqual(report["status"], "FAILED")
         self.assertTrue(any(expected in finding for finding in report["findings"]), report["findings"])
 
+    def assert_actionable_error(self, proc, problem, action, json_output=False):
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertNotIn("Traceback", proc.stdout + proc.stderr)
+        if json_output:
+            self.assertEqual(proc.stderr, "")
+            report = json.loads(proc.stdout)
+            self.assertEqual(report["status"], "ERROR")
+            self.assertEqual(len(report["findings"]), 1)
+            message = report["findings"][0]
+        else:
+            message = proc.stdout if proc.stdout else proc.stderr
+        self.assertIn(problem, message)
+        self.assertIn(action, message)
+
+    def test_missing_bundle_has_corrective_guidance(self):
+        missing = self.root / "missing"
+        for command, extra in (("manifest", ("--bundle-id", "demo")),
+                               ("sign", ("--private-key", self.keys["alice"], "--signer-id", "alice")),
+                               ("verify", ())):
+            with self.subTest(command=command):
+                self.assert_actionable_error(
+                    run(command, missing, *extra), "bundle directory not found",
+                    "existing bundle directory", command == "verify",
+                )
+
+    def test_missing_manifest_suggests_manifest_command(self):
+        (self.bundle / "manifest.json").unlink()
+        for command, extra in (("sign", ("--private-key", self.keys["alice"], "--signer-id", "alice")),
+                               ("verify", ())):
+            with self.subTest(command=command):
+                self.assert_actionable_error(
+                    run(command, self.bundle, *extra), "manifest.json is missing",
+                    "e3bundle manifest", command == "verify",
+                )
+
+    def test_invalid_trusted_keys_has_corrective_guidance(self):
+        path = self.root / "trusted.json"
+        for content in (None, "[]", "null", '"text"', "42", "{broken", '{"alice": 1}'):
+            for output_format in ("json", "text"):
+                with self.subTest(content=content, output_format=output_format):
+                    if content is not None:
+                        path.write_text(content, encoding="utf-8")
+                    self.assert_actionable_error(
+                        run("verify", self.bundle, "--trusted-keys", path, "--format", output_format),
+                        "--trusted-keys", "JSON object mapping signer IDs to base64 public keys",
+                        output_format == "json",
+                    )
+
+    def test_unreadable_signing_key_has_corrective_guidance(self):
+        # A directory is unreadable as a key file on all supported platforms,
+        # including privileged runners where chmod cannot deny file access.
+        for path in (self.root / "missing.key", self.root):
+            with self.subTest(path=path):
+                self.assert_actionable_error(
+                    run("sign", self.bundle, "--private-key", path, "--signer-id", "alice"),
+                    "cannot read private key", "check the --private-key path and read permissions",
+                )
+                self.assertFalse((self.bundle / "signatures.json").exists())
+
     def test_unsigned_bundle_verifies_integrity_only(self):
         code, report = self.verify()
         self.assertEqual(code, 0, report["findings"])

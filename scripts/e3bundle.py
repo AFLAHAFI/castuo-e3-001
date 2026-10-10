@@ -73,6 +73,18 @@ def load_json(path: Path) -> Any:
         raise InputError(f"cannot read {path.name}: {exc}") from exc
 
 
+def load_manifest(bundle: Path) -> Any:
+    if not bundle.is_dir():
+        raise InputError(f"bundle directory not found: {bundle}; provide an existing bundle directory.")
+    path = bundle / MANIFEST
+    if not path.exists():
+        raise InputError(
+            f"{MANIFEST} is missing from {bundle}; "
+            "run e3bundle manifest <bundle> --bundle-id <id> to create it."
+        )
+    return load_json(path)
+
+
 def write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
@@ -113,7 +125,7 @@ def bundle_files(bundle: Path) -> list[str]:
     if bundle.is_symlink():
         raise InputError("bundle directory must not be a symlink")
     if not bundle.is_dir():
-        raise InputError(f"bundle directory not found: {bundle}")
+        raise InputError(f"bundle directory not found: {bundle}; provide an existing bundle directory.")
     for path in sorted(bundle.rglob("*")):
         relpath = path.relative_to(bundle).as_posix()
         if path.is_symlink():
@@ -129,7 +141,11 @@ def load_private_key(path: Path) -> Ed25519PrivateKey:
     try:
         raw = base64.b64decode(path.read_text(encoding="utf-8").strip(), validate=True)
         return Ed25519PrivateKey.from_private_bytes(raw)
-    except (OSError, ValueError) as exc:
+    except OSError as exc:
+        raise InputError(
+            f"cannot read private key {path}; check the --private-key path and read permissions."
+        ) from exc
+    except ValueError as exc:
         raise InputError(f"cannot load private key {path.name}: {exc}") from exc
 
 
@@ -167,7 +183,7 @@ def cmd_keygen(args: argparse.Namespace) -> int:
 def cmd_manifest(args: argparse.Namespace) -> int:
     bundle = args.bundle
     if not bundle.is_dir():
-        raise InputError(f"bundle directory not found: {bundle}")
+        raise InputError(f"bundle directory not found: {bundle}; provide an existing bundle directory.")
     if (bundle / SIGNATURES).exists():
         raise InputError(f"{SIGNATURES} exists; rewriting the manifest would invalidate it. Remove it first.")
     files = [{"path": relpath, "sha256": file_digest(bundle / relpath)} for relpath in bundle_files(bundle)]
@@ -177,7 +193,7 @@ def cmd_manifest(args: argparse.Namespace) -> int:
 
 
 def cmd_sign(args: argparse.Namespace) -> int:
-    manifest = load_json(args.bundle / MANIFEST)
+    manifest = load_manifest(args.bundle)
     if not isinstance(manifest, dict):
         raise InputError(f"{MANIFEST} must be a JSON object")
     key = load_private_key(args.private_key)
@@ -206,11 +222,11 @@ def verify(bundle: Path, min_signatures: int, trusted: dict[str, str] | None, al
     if bundle.is_symlink():
         raise InputError("bundle directory must not be a symlink")
     if not bundle.is_dir():
-        raise InputError(f"bundle directory not found: {bundle}")
+        raise InputError(f"bundle directory not found: {bundle}; provide an existing bundle directory.")
     for reserved_name in RESERVED:
         if (bundle / reserved_name).is_symlink():
             raise InputError(f"symlinks are not allowed in a bundle: {reserved_name}")
-    manifest = load_json(bundle / MANIFEST)
+    manifest = load_manifest(bundle)
     if not isinstance(manifest, dict):
         raise InputError(f"{MANIFEST} must be a JSON object")
     findings: list[str] = []
@@ -339,9 +355,18 @@ def cmd_verify(args: argparse.Namespace) -> int:
             )
     trusted = None
     if args.trusted_keys is not None:
-        trusted = load_json(args.trusted_keys)
+        try:
+            trusted = load_json(args.trusted_keys)
+        except InputError as exc:
+            raise InputError(
+                f"cannot read --trusted-keys file {args.trusted_keys}; provide a readable UTF-8 "
+                "file containing a JSON object mapping signer IDs to base64 public keys."
+            ) from exc
         if not isinstance(trusted, dict) or not all(isinstance(v, str) for v in trusted.values()):
-            raise InputError("trusted keys must be a JSON object {signer_id: public_key_b64}")
+            raise InputError(
+                f"invalid --trusted-keys file {args.trusted_keys}; use a JSON object mapping "
+                "signer IDs to base64 public keys (string values)."
+            )
     report = verify(args.bundle, args.min_signatures, trusted, args.allow_extra)
     text = json.dumps(report, indent=2, sort_keys=True)
     if args.output is not None:
