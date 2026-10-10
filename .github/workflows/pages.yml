@@ -1,8 +1,8 @@
 name: Demo site (GitHub Pages)
 
-# Builds the browser demo with example bundles and CLI from an immutable v0.1.2
-# candidate source commit (not copied by hand), proves browser/CLI conformance, and
-# permits production deployment only after release, PyPI and GHCR artifacts exist.
+# Builds the browser demo with example bundles and a pinned candidate CLI source commit,
+# proves browser/CLI conformance, and keeps deployment blocked until the corrected release,
+# PyPI/GHCR artifacts and owner-configured legal identity fields are available.
 
 on:
   push:
@@ -20,11 +20,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  # Keep PR UI validation independent from the main-branch publication pipeline.
+  group: pages-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 env:
-  # Immutable pre-release candidate source; do not claim a tag before publication.
+  # Immutable candidate source; not a claim that this source has been released.
   CLI_REF: 50b2dde7309f147d39fbb1ac7e7fc9cf00310e4c
   LOGO_SHA256: 54be9cdc29d888b6709478058800cbed31630f1aaca7abf578eec27896cdc78d
 
@@ -81,6 +82,18 @@ jobs:
           cp docs/demo/assets/logo.jpg _site/assets/
           cp -r candidate/examples/bundles _site/bundles
           touch _site/.nojekyll
+      - name: Render legal identity fields from owner-managed secrets
+        if: github.event_name != 'pull_request'
+        env:
+          DEMO_LEGAL_NIF: ${{ secrets.DEMO_LEGAL_NIF }}
+          DEMO_LEGAL_ADDRESS: ${{ secrets.DEMO_LEGAL_ADDRESS }}
+          DEMO_LEGAL_EMAIL: ${{ secrets.DEMO_LEGAL_EMAIL }}
+        run: |
+          set -euo pipefail
+            python scripts/render_demo_legal.py _site/legal.html _site/legal.html
+          else
+            echo "Legal fields are not configured; the template remains and the publication gate will block deployment."
+          fi
       - name: Official logo is unmodified
         run: echo "${LOGO_SHA256}  _site/assets/logo.jpg" | sha256sum -c -
       - name: No unsupported claims on the pages
@@ -168,14 +181,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Legal page has no unfilled placeholders (LSSI art. 10 identification)
+      - name: Legal identity is configured in repository Actions secrets
         id: legal
+        env:
+          DEMO_LEGAL_NIF: ${{ secrets.DEMO_LEGAL_NIF }}
+          DEMO_LEGAL_ADDRESS: ${{ secrets.DEMO_LEGAL_ADDRESS }}
+          DEMO_LEGAL_EMAIL: ${{ secrets.DEMO_LEGAL_EMAIL }}
         run: |
-          if grep -nE "\[(NIF|DOMICILIO|CORREO|CIUDAD)\]" docs/demo/legal.html; then
+          set -euo pipefail
+          missing=()
+          [[ -n "${DEMO_LEGAL_NIF:-}" ]] || missing+=("DEMO_LEGAL_NIF")
+          [[ -n "${DEMO_LEGAL_ADDRESS:-}" ]] || missing+=("DEMO_LEGAL_ADDRESS")
+          [[ -n "${DEMO_LEGAL_EMAIL:-}" ]] || missing+=("DEMO_LEGAL_EMAIL")
+          if (( ${#missing[@]} > 0 )); then
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "legal.html still has placeholders; Pages deployment remains blocked."
+            printf 'Pages deployment blocked; configure the required repository Actions secrets: %s\n' "${missing[*]}"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Legal field secrets are configured; their values are not logged."
           fi
       - name: Check public v0.1.2 release, PyPI distribution and GHCR image
         id: check
