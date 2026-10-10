@@ -17,12 +17,9 @@ Test reports, datasets, audit exports and lab results are often shared as plain 
 
 ## Install
 
-```bash
-python -m pip install "git+https://github.com/Traky12/castuo-e3-001@v0.1.2"
-e3bundle --help
-```
+**Release status (2026-10-10): no approved v0.1.2 or v0.1.3 release is available.** The v0.1.2 files on `main` are an unpublished candidate; the `v0.1.2` Git tag does not exist. Do not install or pin `@v0.1.2`, and do not use the current `main` candidate for security-sensitive verification while release review is pending. The last earlier tag is v0.1.1, but it is not represented as a fix for the pending release review. The hosted publication gate remains closed.
 
-Python 3.11 or newer. The unit/CLI suite is tested in CI on Ubuntu, macOS and Windows with Python 3.11–3.13; the composite Action and clean-wheel packaging job run on Ubuntu. Other OS/Python combinations are not currently part of the automated matrix. Latest release: [v0.1.2](https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.2) (alpha). Not yet published on PyPI. From a clone you can also run `python scripts/e3bundle.py`.
+Python 3.11 or newer. The unit/CLI suite is intended for CI on Ubuntu, macOS and Windows with Python 3.11–3.13; that matrix must be green on the exact release commit before publication. PyPI availability is not claimed. For source inspection only, clone the repository and run `python scripts/e3bundle.py --help`; source checkout use is not a release or a production recommendation.
 
 ## Try it in your browser
 
@@ -32,21 +29,7 @@ The demo uses the real `v0.1.1` example bundles and performs SHA-256 and Ed25519
 
 ## Run with Docker
 
-No Python needed. Release images for `linux/amd64` and `linux/arm64` are published to GitHub Container Registry by the `container.yml` workflow, built from the release tag with an SBOM and build provenance:
-
-```bash
-docker run --rm -v "$PWD:/data" ghcr.io/traky12/e3bundle:0.1.2 \
-  verify examples/bundles/valid --min-signatures 2 \
-  --trusted-keys examples/bundles/trusted-keys.json --format text
-```
-
-The image runs as a non-root user with `/data` as its working directory and makes no network calls. For repeatable runs, pin the digest shown on the release page instead of the tag, and check where it was built:
-
-```bash
-gh attestation verify oci://ghcr.io/traky12/e3bundle:0.1.2 --owner Traky12
-```
-
-There is no `latest` tag while the project is alpha.
+**Container publication is currently not claimed.** Do not pull or rely on a `0.1.2` image as a published release: the v0.1.2 tag and the corresponding release were not found during the 2026-10-10 repository audit. Versioned container instructions and attestation checks will be restored only after the corrected, approved release has been tagged, published and verified.
 
 ## 30-second demo
 
@@ -108,15 +91,7 @@ What `verify` detects: modified, missing and undeclared files; path traversal an
 
 ## Use it in GitHub Actions
 
-```yaml
-- uses: Traky12/castuo-e3-001@50b2dde7309f147d39fbb1ac7e7fc9cf00310e4c # v0.1.2 alpha (exact release commit)
-  with:
-    bundle: evidence/release-42
-    min-signatures: "2"
-    trusted-keys: .github/trusted-keys.json
-```
-
-For supply-chain safety, use the full commit SHA shown on the [release page](https://github.com/Traky12/castuo-e3-001/releases), not a moving tag. The SHA above is the commit behind the published `v0.1.2` alpha tag.
+The composite Action is present in this repository, but the current main-branch candidate is **not a released version**. Do not pin the former v0.1.2 candidate SHA as a published release reference. Wait for the security review, corrected version tag, published artifacts and passing release checks before adopting a versioned Action example. Any consuming workflow should use a full 40-character commit SHA and provide an explicit trusted-key set with a positive signature threshold.
 
 The step writes the JSON report (`report-path`, default `e3bundle-report.json`), adds the findings to the job summary and fails when verification does not pass. Set `fail-on-error: "false"` to keep the job going and branch on the `status` output (`VERIFIED`, `FAILED` or `ERROR`) instead; GitHub does not expose outputs of a failed step.
 

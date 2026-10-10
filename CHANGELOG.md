@@ -4,7 +4,9 @@ All notable changes to this repository are documented here. Versions follow [Sem
 
 ## [Unreleased]
 
-## [0.1.2] - 2026-10-10
+**Candidate package version:** `0.1.2` (not tagged or released yet).
+
+### Candidate v0.1.2 changes (not released)
 
 ### Security
 - `e3bundle verify` rejects manifest paths that alias the same file under another name (`./file`, `a//b`, `a/./b`, trailing `/`) and paths containing NUL, so one file cannot be declared twice under different names.
@@ -52,7 +54,6 @@ All notable changes to this repository are documented here. Versions follow [Sem
 - README reorganised product-first (problem, install, demo, limits, security, roadmap); the E3-001 protocol, authority boundary and history follow below, unchanged in substance.
 - `PROTOCOL.md` states that `scripts/run_s001a_foreign_replay.py` is not published in this repository.
 
-[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.2...HEAD
-[0.1.2]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.1...v0.1.2
+[Unreleased]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/Traky12/castuo-e3-001/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Traky12/castuo-e3-001/releases/tag/v0.1.0
