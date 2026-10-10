@@ -90,6 +90,7 @@ jobs:
           DEMO_LEGAL_EMAIL: ${{ secrets.DEMO_LEGAL_EMAIL }}
         run: |
           set -euo pipefail
+          if [[ -n "${DEMO_LEGAL_NIF:-}" && -n "${DEMO_LEGAL_ADDRESS:-}" && -n "${DEMO_LEGAL_EMAIL:-}" ]]; then
             python scripts/render_demo_legal.py _site/legal.html _site/legal.html
           else
             echo "Legal fields are not configured; the template remains and the publication gate will block deployment."

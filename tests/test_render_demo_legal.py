@@ -57,6 +57,16 @@ class RenderDemoLegalTests(unittest.TestCase):
         for marker in ("{{LEGAL_NIF}}", "{{LEGAL_ADDRESS}}", "{{LEGAL_EMAIL}}", "{{LEGAL_EMAIL_HREF}}"):
             self.assertIn(marker, template)
 
+    def test_pages_renderer_fails_closed_without_secrets_without_aborting_build(self):
+        workflow = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+        start = workflow.index("      - name: Render legal identity fields from owner-managed secrets")
+        end = workflow.index("      - name: Official logo is unmodified", start)
+        block = workflow[start:end]
+        self.assertIn("if: github.event_name != 'pull_request'", block)
+        self.assertIn('if [[ -n "${DEMO_LEGAL_NIF:-}" && -n "${DEMO_LEGAL_ADDRESS:-}" && -n "${DEMO_LEGAL_EMAIL:-}" ]]; then', block)
+        self.assertIn("python scripts/render_demo_legal.py _site/legal.html _site/legal.html", block)
+        self.assertIn("publication gate will block deployment", block)
+
 
 if __name__ == "__main__":
     unittest.main()
