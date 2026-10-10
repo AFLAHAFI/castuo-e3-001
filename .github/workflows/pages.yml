@@ -77,7 +77,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site/assets
-          cp docs/demo/index.html docs/demo/crear.html docs/demo/styles.css docs/demo/verifier.js docs/demo/demo.js docs/demo/crear.js docs/demo/input.js docs/demo/importer.js docs/demo/paquete.html docs/demo/paquete.js _site/
+          cp docs/demo/index.html docs/demo/crear.html docs/demo/styles.css docs/demo/verifier.js docs/demo/demo.js docs/demo/crear.js docs/demo/input.js docs/demo/importer.js docs/demo/paquete.html docs/demo/paquete.js docs/demo/legal.html _site/
           cp docs/demo/assets/logo.jpg _site/assets/
           cp -r candidate/examples/bundles _site/bundles
           touch _site/.nojekyll
@@ -164,8 +164,19 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
-      ready: ${{ steps.check.outputs.ready }}
+      ready: ${{ steps.check.outputs.ready == 'true' && steps.legal.outputs.ready == 'true' }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Legal page has no unfilled placeholders (LSSI art. 10 identification)
+        id: legal
+        run: |
+          if grep -nE "\[(NIF|DOMICILIO|CORREO|CIUDAD)\]" docs/demo/legal.html; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "legal.html still has placeholders; Pages deployment remains blocked."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Check public v0.1.2 release, PyPI distribution and GHCR image
         id: check
         env:

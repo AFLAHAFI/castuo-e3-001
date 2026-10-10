@@ -275,7 +275,7 @@ test.describe('advanced mode', () => {
 
 test.describe('no horizontal overflow', () => {
   for (const width of [375, 768, 1440]) {
-    for (const file of ['index.html', 'index.html#avanzado', 'crear.html', 'paquete.html']) {
+    for (const file of ['index.html', 'index.html#avanzado', 'crear.html', 'paquete.html', 'legal.html']) {
       test(`${file} at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(file);
