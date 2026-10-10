@@ -23,7 +23,7 @@ jobs:
   firewall:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       # Snapshot present: always validated. Snapshot absent: reported as
@@ -48,7 +48,7 @@ jobs:
   authority-boundaries:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Self-test documentation gate
         run: python3 scripts/validate_public_snapshot.py --self-test
       - name: Validate E3 authority boundaries (README and historical records)
