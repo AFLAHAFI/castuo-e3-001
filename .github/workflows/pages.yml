@@ -1,8 +1,8 @@
 name: Demo site (GitHub Pages)
 
-# Builds the browser demo from docs/demo with the example bundles and CLI taken
-# from the release tag (not copied by hand), proves the browser verifier gives
-# the same results as that CLI, and deploys to GitHub Pages from main only.
+# Builds the browser demo with example bundles and CLI from an immutable v0.1.2
+# candidate source commit (not copied by hand), proves browser/CLI conformance, and
+# permits production deployment only after release, PyPI and GHCR artifacts exist.
 
 on:
   push:
@@ -24,7 +24,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: v0.1.1
+  # Immutable pre-release candidate source; do not claim a tag before publication.
+  CLI_REF: 50b2dde7309f147d39fbb1ac7e7fc9cf00310e4c
   LOGO_SHA256: 54be9cdc29d888b6709478058800cbed31630f1aaca7abf578eec27896cdc78d
 
 jobs:
@@ -45,24 +46,40 @@ jobs:
           node-version: "22"
       - name: Install the CLI dependency
         run: python -m pip install --disable-pip-version-check "cryptography>=50.0.2"
-      - name: Extract example bundles and CLI from the release tag
+      - name: Extract example bundles and candidate CLI from the pinned source commit
         run: |
-          mkdir -p release
-          git archive "$RELEASE_TAG" examples/bundles scripts/e3bundle.py | tar -x -C release
+          mkdir -p candidate
+          git archive "$CLI_REF" examples/bundles scripts/e3bundle.py | tar -x -C candidate
       - name: JavaScript syntax
         run: for f in docs/demo/*.js docs/demo/tests/*.mjs; do node --check "$f"; done
-      - name: Conformance with the released CLI (8 scenarios + interop)
-        run: node docs/demo/tests/conformance.mjs release/examples/bundles python release/scripts/e3bundle.py
+      - name: Conformance with the v0.1.2 candidate CLI (8 scenarios + interop)
+        run: node docs/demo/tests/conformance.mjs candidate/examples/bundles python candidate/scripts/e3bundle.py
+      - name: Record actual candidate manifest hash from CLI verification
+        run: |
+          python candidate/scripts/e3bundle.py verify candidate/examples/bundles/valid \
+            --min-signatures 2 \
+            --trusted-keys candidate/examples/bundles/trusted-keys.json \
+            > /tmp/e3bundle-candidate-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("/tmp/e3bundle-candidate-report.json").read_text(encoding="utf-8"))
+          assert report["status"] == "VERIFIED", report
+          assert report["files_verified"] == report["files_declared"], report
+          print("candidate_manifest_hash=" + report["manifest_hash"])
+          print("candidate_verification_status=" + report["status"])
+          print("candidate_files=" + str(report["files_verified"]) + "/" + str(report["files_declared"]))
+          PY
       - name: Local import rules (paths, limits, decoding)
         run: node docs/demo/tests/importer.mjs
-      - name: Input conformance with the released CLI (malformed inputs)
-        run: node docs/demo/tests/input-conformance.mjs release/examples/bundles python release/scripts/e3bundle.py
+      - name: Input conformance with the v0.1.2 candidate CLI (malformed inputs and unsafe paths)
+        run: node docs/demo/tests/input-conformance.mjs candidate/examples/bundles python candidate/scripts/e3bundle.py
       - name: Assemble site
         run: |
           mkdir -p _site/assets
           cp docs/demo/index.html docs/demo/crear.html docs/demo/styles.css docs/demo/verifier.js docs/demo/demo.js docs/demo/crear.js docs/demo/input.js docs/demo/importer.js docs/demo/paquete.html docs/demo/paquete.js _site/
           cp docs/demo/assets/logo.jpg _site/assets/
-          cp -r release/examples/bundles _site/bundles
+          cp -r candidate/examples/bundles _site/bundles
           touch _site/.nojekyll
       - name: Official logo is unmodified
         run: echo "${LOGO_SHA256}  _site/assets/logo.jpg" | sha256sum -c -
@@ -109,12 +126,12 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Released CLI for the local-bundle comparison
+      - name: Candidate CLI for the local-bundle comparison
         working-directory: .
         run: |
           python -m pip install --disable-pip-version-check "cryptography>=50.0.2"
-          mkdir -p release
-          git archive "$RELEASE_TAG" scripts/e3bundle.py | tar -x -C release
+          mkdir -p candidate
+          git archive "$CLI_REF" scripts/e3bundle.py | tar -x -C candidate
       - name: Download the assembled site
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -126,9 +143,9 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run UI tests (${{ matrix.browser }})
         # The site is downloaded to <repo>/_site, the config's default location. paquete.spec
-        # compares each local folder with `e3bundle verify` from the release tag.
+        # compares each local folder with `e3bundle verify` from the pinned candidate source commit.
         env:
-          E3_CLI: ${{ github.workspace }}/release/scripts/e3bundle.py
+          E3_CLI: ${{ github.workspace }}/candidate/scripts/e3bundle.py
           E3_PYTHON: python
         run: npx playwright test --project=${{ matrix.browser }}
       - name: Keep the report when tests fail
@@ -141,9 +158,46 @@ jobs:
             docs/demo/tests/ui/test-results
           retention-days: 14
 
-  deploy:
+  publication_gate:
+    # PRs may build/test the candidate, but public deployment stays blocked until
+    # GitHub release v0.1.2, PyPI e3bundle 0.1.2 and GHCR image 0.1.2 are available.
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: [build, ui]
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check public v0.1.2 release, PyPI distribution and GHCR image
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_code=$(curl --silent --show-error --output /tmp/e3-release.json --write-out '%{http_code}' \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            https://api.github.com/repos/Traky12/castuo-e3-001/releases/tags/v0.1.2)
+          if [ "$release_code" != "200" ] || ! python -c 'import json; r=json.load(open("/tmp/e3-release.json")); raise SystemExit(0 if r.get("tag_name") == "v0.1.2" and not r.get("draft", True) and r.get("prerelease") is True else 1)'; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "v0.1.2 is not a published alpha release; Pages deployment remains blocked."
+            exit 0
+          fi
+          if ! curl --fail --silent --show-error https://pypi.org/pypi/e3bundle/0.1.2/json --output /tmp/e3-pypi.json ||
+             ! python -c 'import json; r=json.load(open("/tmp/e3-pypi.json")); raise SystemExit(0 if r.get("info", {}).get("version") == "0.1.2" else 1)'; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "e3bundle 0.1.2 is not available on PyPI; Pages deployment remains blocked."
+            exit 0
+          fi
+          if ! docker manifest inspect ghcr.io/traky12/e3bundle:0.1.2 >/dev/null 2>&1; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "GHCR image 0.1.2 is not available; Pages deployment remains blocked."
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "Publication gate passed: public release, PyPI 0.1.2 and GHCR image 0.1.2 are available."
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.publication_gate.outputs.ready == 'true'
+    needs: [build, ui, publication_gate]
     runs-on: ubuntu-latest
     permissions:
       pages: write

@@ -1,6 +1,6 @@
 /*
  * e3.bundle.v1 verifier for the browser demo.
- * Mirrors scripts/e3bundle.py as released in v0.1.1. Equivalence with that CLI is
+ * Mirrors scripts/e3bundle.py at candidate commit 50b2dde7309f147d39fbb1ac7e7fc9cf00310e4c (v0.1.2; release pending). Equivalence with that CLI is
  * checked on every change by docs/demo/tests/conformance.mjs (scenarios) and
  * docs/demo/tests/input-conformance.mjs (malformed input and content) in CI.
  * Uses only WebCrypto (SHA-256, Ed25519). No network, no storage.
@@ -106,8 +106,9 @@
   }
 
   function isSafePath(p) {
-    if (typeof p !== 'string' || !p || p.includes('\\') || p.includes(':') || p.startsWith('/')) return false;
-    return !p.split('/').some((part) => part === '..' || part === '.');
+    if (typeof p !== 'string' || !p || p.includes('\\') || p.includes(':') || p.includes('\u0000') || p.startsWith('/')) return false;
+    // Match the CLI: reject aliases and empty path segments before filesystem normalisation.
+    return !p.split('/').some((part) => part === '' || part === '.' || part === '..');
   }
 
   /**

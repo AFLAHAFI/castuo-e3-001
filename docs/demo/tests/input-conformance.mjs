@@ -1,6 +1,6 @@
 // Input conformance: malformed inputs (unreadable JSON, and well-formed JSON with malformed
 // content) must get the same status, exit code and findings in the browser
-// (input.js + verifier.js) as in the released CLI.
+// (input.js + verifier.js) as in the pinned v0.1.2 candidate CLI source.
 // Kept separate from conformance.mjs, whose eight scenarios are unchanged.
 //
 // Usage: node docs/demo/tests/input-conformance.mjs <bundles-dir> <python> <e3bundle.py>
@@ -53,6 +53,15 @@ Object.assign(cases, {
   'file entry not an object': { manifest: withManifest({ files: ['data/readings.csv', M.files[1]] }) },
   'file entry without path': { manifest: withManifest({ files: [{ sha256: M.files[0].sha256 }, M.files[1]] }) },
   'path named constructor': { manifest: withManifest({ files: [...M.files, { path: 'constructor', sha256: M.files[0].sha256 }] }) },
+  'path has empty middle segment a//b': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a//b' }, M.files[1]] }) },
+  'path has trailing slash a/': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a/' }, M.files[1]] }) },
+  'path contains NUL': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a/\u0000/b' }, M.files[1]] }) },
+  'path has dot segment a/./b': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a/./b' }, M.files[1]] }) },
+  'path has parent segment a/../b': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a/../b' }, M.files[1]] }) },
+  'path is absolute': { manifest: withManifest({ files: [{ ...M.files[0], path: '/absolute/file' }, M.files[1]] }) },
+  'path contains backslash': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a\\b' }, M.files[1]] }) },
+  'path contains colon': { manifest: withManifest({ files: [{ ...M.files[0], path: 'a:b' }, M.files[1]] }) },
+  'path is empty': { manifest: withManifest({ files: [{ ...M.files[0], path: '' }, M.files[1]] }) },
   'signature is null': { signatures: withSig((s) => { s[1] = null; }) },
   'signature is an array': { signatures: withSig((s) => { s[1] = []; }) },
   'signer_id is a number': { signatures: withSig((s) => { s[1].signer_id = 5; }) },
